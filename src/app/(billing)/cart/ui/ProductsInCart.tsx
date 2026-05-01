@@ -12,7 +12,7 @@ export const ProductsInCart = () => {
     const productsInCart = useOrderAbastecimientoStore( state => state.items );
     const updateProductQuantity = useOrderAbastecimientoStore( state => state.updateProductQuantity );
     const removeProduct = useOrderAbastecimientoStore( state => state.removeProduct );
-
+    console.log(productsInCart)
     useEffect(() => {
         setLoaded(true) ;
     });
@@ -27,7 +27,7 @@ export const ProductsInCart = () => {
                 productsInCart.map( (product) => (
                     <div key={ `${ product.codigo_producto }`  } className="flex mb-5">
                         <ProductImage
-                            src={product.img }
+                            src={ product.img }
                             width={100}
                             height={100}
                             alt={product.nombre_producto || product.codigo_producto}

@@ -1,13 +1,14 @@
 "use client";
 import { useState } from "react";
 import { IBillingForm, IComprobanteAdminItem, IOrderItem, IReceptor } from "@/interfaces";
-import { Constants, initialBillingForm } from "@/utils";
+import { Constants, initialBillingForm, notify, generarTicketComprobante, Print } from "@/utils";
 import { Direccion, NumeroDocumento, Placa, RazonSocial, TipoPago } from "./form-values";
 import { useSession } from "next-auth/react";
 import { saveBilling } from "@/actions";
 import { Comprobante } from "@/model";
 import { useRouter } from "next/navigation";
 import { FloatingMenu } from "./form-values/FloatMenu";
+import { useOrderAbastecimientoStore } from "@/store";
 
 interface Props {
     total: number;
@@ -19,6 +20,7 @@ interface Props {
 export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
     const router = useRouter();
     const { data: session } = useSession();
+    const removeAllProducts = useOrderAbastecimientoStore((state) => state.removeAllProducts);
     const [formValues, setFormValues] = useState<IBillingForm>({...initialBillingForm, efectivo: total });
     const { tipoComprobante, tipoDocumento, numeroDocumento, razonSocial, placa, direccion, efectivo, tarjeta, yape } = formValues;
     const UsuarioId = +(session?.user.id || 0);
@@ -70,7 +72,15 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
             receptor, tipoComprobante, subTotal, totalIgv, total, tarjeta, efectivo, yape, ruc, UsuarioId, items, placa, 
             fecha_abastecimiento, tiempo_abastecimiento, id_abastecimiento, pistola, codigo_producto, cantidad
         )
-        const billing = await saveBilling(comprobante.toPlainObject());
+        const { status, message, bill } = await saveBilling(comprobante.toPlainObject());
+        if(status && bill){
+            const bytes = generarTicketComprobante(bill);
+            removeAllProducts();
+            await Print({bytes})            
+            notify({message, type:'success'})
+        }else {
+            notify({message, type:'error'})
+        }
         router.push('/')
     }
     

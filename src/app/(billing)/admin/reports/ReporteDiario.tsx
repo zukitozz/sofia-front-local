@@ -5,17 +5,21 @@ import { currencyFormat, toLocaleOnlyDate } from "@/utils";
 import { ChangeEvent, useEffect, useState } from "react";
 import { IReporteCierrePorDia } from '@/interfaces';
 
-const fetcher = (fecha: string) => obtieneReporteCierrePorDiaGalones(fecha);
+const fetcher = (fecha: string, includeProducts: boolean) => obtieneReporteCierrePorDiaGalones(fecha, includeProducts);
 
 export const ReporteDiario = () => {
-    const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date())); // Default to today's date in 'YYYY-MM-DD' format
-    const { data, error, isValidating, isLoading, mutate } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, (url: string) => fetcher(date));
+    const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date()));
+    const { data, error, isValidating, isLoading, mutate } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, (url: string) => fetcher(date, isChecked));
+    const [isChecked, setIsChecked] = useState<boolean>(false);
     const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
         setDate(e.target.value);
     };
+    const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setIsChecked(e.target.checked);
+    };
     useEffect(() => {
         mutate();
-    }, [date])
+    }, [date, isChecked])
     if(isLoading || isValidating || error || !Array.isArray(data)){
         return (<div className="flex justify-center items-center mb-7 px-10 sm:px-0"><div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div></div>);
     }
@@ -31,6 +35,14 @@ export const ReporteDiario = () => {
         <div className="col-span-2 bg-white rounded-lg shadow-md p-4">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold mb-2">Reporte diario</h2>
+                <label className="flex items-center gap-2">
+                <input 
+                    type="checkbox" 
+                    checked={isChecked} 
+                    onChange={handleOnChange} 
+                />
+                <span>Incluir productos</span>
+                </label>               
                 <input
                     type="date"
                     id="start"

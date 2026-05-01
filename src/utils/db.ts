@@ -1,4 +1,4 @@
-import { ICierreTurnoDetalle, ICierreTurnoSoles, IComprobanteAdmin } from '@/interfaces';
+import { ICierreTurnoDetalle, ICierreTurnoSoles, IComprobanteAdmin, ICierreTurnoResponse } from '@/interfaces';
 import sql, { ConnectionPool, ISqlTypeFactoryWithLength, ISqlTypeFactoryWithNoParams, Transaction } from 'mssql';
 import { Constants } from './constants';
 import { Session } from 'next-auth';
@@ -214,8 +214,7 @@ import { Session } from 'next-auth';
             throw error;
         }
     }
-
-    export async function saveCierreTurnoTransaction(session: Session|null, total: number, soles: ICierreTurnoSoles, productos: ICierreTurnoDetalle[]){
+    export async function saveCierreTurnoTransaction(session: Session|null, total: number, soles: ICierreTurnoSoles, productos: ICierreTurnoDetalle[]): Promise<ICierreTurnoResponse>{
         config.database = process.env.DB_DATABASE_AUXILIAR||"";
         const pool: ConnectionPool = await sql.connect(config);
         try {
@@ -271,13 +270,26 @@ import { Session } from 'next-auth';
                 await sqlRequestDepositos.query(`Update Depositos set CierreturnoId = @CierreturnoId where UsuarioId = @UsuarioId and CierreturnoId is null`);
 
                 await transaction.commit();
+
+                return {
+                    message: "Cierre realizado correctamente",
+                    status: true,                    
+                }
             }catch(error){
                 console.error("Error executing transaction: saveCierreTurnoTransaction");
                 console.error(JSON.stringify(error));
                 await transaction.rollback();
+                return {
+                    message: `Error al cerrar turno | ${JSON.stringify(error)}`,
+                    status: false,                    
+                }
             }            
         } catch (error) {
             console.error("Pool connection error:", error);
+            return {
+                message: `Error al cerrar turno | ${JSON.stringify(error)}`,
+                status: false,                    
+            }            
         } finally {
             if (pool) await pool.close();
         }

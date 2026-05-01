@@ -31,7 +31,7 @@ export const DepositosTable = ({ page, perPage, keyword }: TableProps) => {
     return (
        <>
         <div className="mb-2">
-            <Link href={ `/depositos/0` }>
+            <Link className="btn-primary px-5 py-2 mt-3" href={ `/depositos/0` }>
                 Nuevo
             </Link>            
         </div>
@@ -90,7 +90,7 @@ export const DepositosTable = ({ page, perPage, keyword }: TableProps) => {
                         { toLocaleShow(item.fecha)}
                     </td>
                     <td className="text-sm text-gray-900 font-light px-6 ">
-                        <Link href={ `/depositos/${ item.id }` }>
+                        <Link className="btn-primary px-5 py-2 mt-3" href={ `/depositos/${ item.id }` }>
                             Modificar
                         </Link>
                     </td>                    

@@ -4,6 +4,7 @@ export * from './cierredia'
 export * from './depositos';
 export * from './descuentos';
 export * from './gastos';
+export * from './historicos';
 export * from './user/get-user';
 export * from './receptores';
 export * from './abastecimiento/get-abastecimientos';

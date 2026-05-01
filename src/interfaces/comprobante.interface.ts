@@ -45,6 +45,7 @@ export interface IComprobanteAdmin {
     comprobante_nota_despacho: string|null;
     fecha_facturado_nota_despacho: string|null;
     Receptor: IReceptor;
+    ReceptorId?: number;
     UsuarioId: number;    
     fecha_hora: string;
     xml_envio?: string;
@@ -66,7 +67,6 @@ export interface IComprobanteAdminItem {
     codigo: number
     cantidad_venta: number;
 }
-
 export interface ICartProduct {
     cantidad_string: string;
     precio_unitario_string: string;
@@ -84,4 +84,10 @@ export interface ICartProduct {
     cantidad_venta: number;
     
     
+}
+
+export interface IComprobanteHistorico extends IComprobanteAdmin {
+    turno: string;
+    isla: string;
+    usuario: string;
 }

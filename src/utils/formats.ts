@@ -52,13 +52,7 @@ export const toLocaleOnlyDate = (date: string|Date) => {
   }else {
     fecha = date;
   }
-
-  const formattedDate = fecha.toLocaleString('sv-SE', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric'
-  });
-  return formattedDate;
+  return fecha.toISOString().split('T')[0];
 }
 
 export const toIsoString = (date: string|Date) => {

@@ -28,7 +28,7 @@ export const ReceptoresTable = ({ page, perPage, keyword }: TableProps) => {
     return (
         <>
         <div className="mb-2">
-            <Link href={ `/admin/receptores/0` }>
+            <Link className="btn-primary px-5 py-2 mt-3"  href={ `/admin/receptores/0` }>
                 Nuevo
             </Link>            
         </div>
@@ -78,7 +78,7 @@ export const ReceptoresTable = ({ page, perPage, keyword }: TableProps) => {
                         {item.razon_social}
                     </td>
                     <td className="text-sm text-gray-900 font-light px-6 ">
-                        <Link href={ `/admin/receptores/${ item.id }` }>
+                        <Link className="btn-primary px-5 py-2 mt-3"  href={ `/admin/receptores/${ item.id }` }>
                             Modificar
                         </Link>
                     </td>                    

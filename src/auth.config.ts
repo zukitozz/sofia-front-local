@@ -3,6 +3,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
 import { getIslaAuth, getUserAuth } from './actions';
 import { mapearUsuarioDBUsuarioLogin } from './utils/supports';
+import { headers } from 'next/headers';
 
 export const authConfig: NextAuthConfig = {
   pages: {
@@ -58,7 +59,10 @@ export const authConfig: NextAuthConfig = {
           if( passwordincoming !== user.password ) return null;
         //   // Regresar el usuario sin el password
           //const { password: _, ...rest } = user;
-          const isla = await getIslaAuth( ip );
+          const headerList = headers();
+          const ipFromHeader = headerList.get('x-forwarded-for')||"123";   
+          const ipEncoded = ipFromHeader?.split(',')[0] || '127.0.0.1';       
+          const isla = await getIslaAuth( ipEncoded );
           //TODO: manejar el caso cuando no hay isla y guardar el logica de logs
           return mapearUsuarioDBUsuarioLogin(user, isla, turno);
       },

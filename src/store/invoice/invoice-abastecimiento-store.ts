@@ -13,6 +13,7 @@ interface State {
     getSummaryInformation: () => { subTotal: number; totalIgv: number; total: number };
     removeProduct: (product: IOrderItem) => void;
     applyDiscountIfExists: (numeroDocumento: string) => Promise<void>;
+    removeAllProducts: () => void;
 }
 
 export const useOrderAbastecimientoStore = create<State>()( 
@@ -71,7 +72,8 @@ export const useOrderAbastecimientoStore = create<State>()(
                     precio_unitario: product.precio,
                     descripcion: product.nombre,
                     codigo_producto: product.codigo,
-                    medida: product.medida
+                    medida: product.medida,
+                    img: product.img
                 }                
                 if(!productInOrder){
                     set({ items: [...items, productItem] });
@@ -130,7 +132,10 @@ export const useOrderAbastecimientoStore = create<State>()(
                     return item;
                 });
                 set({ items: updatedItems });                
-            }
+            },
+            removeAllProducts: () => {
+                set({ items: [] });
+            },
         }),
         {
             name: 'order-abastecimiento-store',

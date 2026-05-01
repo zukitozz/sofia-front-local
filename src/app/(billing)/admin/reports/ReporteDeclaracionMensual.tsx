@@ -5,7 +5,7 @@ import { toLocaleOnlyDate, toLocaleShow } from "@/utils";
 import { ChangeEvent, useEffect, useState } from "react";
 import { IReporteDeclaracionMensual } from '@/interfaces';
 
-const fetcher = (fecha: string) => obtieneReporteDeclaracionMensual('2026','04');
+const fetcher = (fecha: string) => obtieneReporteDeclaracionMensual(fecha);
 
 export const ReporteDeclaracionMensual = () => {
     const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date())); // Default to today's date in 'YYYY-MM-DD' format
@@ -15,6 +15,7 @@ export const ReporteDeclaracionMensual = () => {
     };
     useEffect(() => {
         mutate();
+        console.log(date)
     }, [date])
     if(isLoading || isValidating || error || !Array.isArray(data)){
         return (<div className="flex justify-center items-center mb-7 px-10 sm:px-0"><div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div></div>);
@@ -25,7 +26,7 @@ export const ReporteDeclaracionMensual = () => {
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold mb-2">Reporte declaración mensual</h2>
                 <input
-                    type="date"
+                    type="month"
                     id="start"
                     name="trip-start"
                     value={date} 
@@ -63,7 +64,7 @@ export const ReporteDeclaracionMensual = () => {
                 <tbody>
                     {data?.map((item : IReporteDeclaracionMensual) => (
                     <tr
-                        key={item.numeracion_comprobante}
+                        key={item.numeracion_comprobante + item.numeracion_comprobante}
                         className="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100"
                     >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

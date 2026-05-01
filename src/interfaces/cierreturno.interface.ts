@@ -53,3 +53,8 @@ export interface ICierreTurno {
     detalle?: ICierreTurnoDetalle[];
     usuario?: IUser;
 }
+
+export interface ICierreTurnoResponse {
+    message: string;
+    status: boolean;
+}

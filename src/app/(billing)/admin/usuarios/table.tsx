@@ -28,7 +28,7 @@ export const UsuariosTable = ({ page, perPage, keyword }: TableProps) => {
     return (
         <>
         <div className="mb-2">
-            <Link href={ `/admin/usuarios/0` }>
+            <Link className="btn-primary px-5 py-2 mt-3" href={ `/admin/usuarios/0` }>
                 Nuevo
             </Link>            
         </div>
@@ -96,7 +96,7 @@ export const UsuariosTable = ({ page, perPage, keyword }: TableProps) => {
                         {item.rol}
                     </td>
                     <td className="text-sm text-gray-900 font-light px-6 ">
-                        <Link href={ `/admin/usuarios/${ item.id }` }>
+                        <Link className="btn-primary px-5 py-2 mt-3" href={ `/admin/usuarios/${ item.id }` }>
                             Modificar
                         </Link>
                     </td>                    

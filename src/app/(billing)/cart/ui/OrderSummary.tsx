@@ -19,14 +19,12 @@ export const OrderSummary = () => {
   }, []);
 
 
-//   useEffect(() => {
 
+  useEffect(() => {
     if ( total === 0 && loaded === true )   {
       router.replace('/market')
     }
-
-
-//   },[ itemsInCart, loaded ])
+  },[ loaded ])
 
 
 

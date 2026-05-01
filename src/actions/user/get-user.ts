@@ -18,6 +18,7 @@ export async function getUserAuth(userForm: IUserForm): Promise<IUser|null> {
 }
 
 export async function getIslaAuth(ip: string): Promise<string> {
+    console.log("Isla auith" + ip)
     try {
      const user = await executeQuery<any>(
         process.env.DB_DATABASE_AUXILIAR||"", 

@@ -1,7 +1,7 @@
 'use client';
 import useSWR from 'swr';
 import { ICierreTurnoDetalle, ICierreTurnoSoles, IDepositos, IGastos } from "@/interfaces";
-import { currencyFormat, toLocaleShow } from "@/utils";
+import { currencyFormat, notify, toLocaleShow, Print, imprimirCierreTurno } from "@/utils";
 import { saveCierreTurno, obtieneCierreTurno } from '@/actions/cierreturno'
 import { useSession } from "next-auth/react";
 
@@ -60,11 +60,12 @@ export const CierreVentas = () => {
         const { yape, efectivo, tarjeta } = soles;
         const tot_tipo_pago = efectivo + yape + tarjeta
         const total = tot_tipo_pago - ( tot_depositos + tot_gastos );
-
         const handlerProcessCierre = async () => {
-            await saveCierreTurno(session, total, soles, productos)
+            //const { message, status } = await saveCierreTurno(session, total, soles, productos)
+            const bytes = imprimirCierreTurno({detalles: productos, totalesSoles: soles, gastos, depositos});
+            await Print({bytes})            
+            //notify({message, type:'success'})
         }
-
         if (total == 0) {
                 return (
                     <div className="bg-white rounded-xl shadow-xl p-7 col-span-3">

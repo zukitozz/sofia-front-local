@@ -6,3 +6,4 @@ export * from './providers/Providers';
 export * from './ui/modal/modal';
 export * from './product/product-image/ProductImage';
 export * from './product/quantity-selector/QuantitySelector';
+export * from './ui/print/PrintComprobanteHistorico';

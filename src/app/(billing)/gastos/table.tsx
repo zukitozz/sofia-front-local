@@ -31,7 +31,7 @@ export const GastosTable = ({ page, perPage, keyword }: TableProps) => {
     return (
        <>
         <div className="mb-2">
-            <Link href={ `/gastos/0` }>
+            <Link className="btn-primary px-5 py-2 mt-3" href={ `/gastos/0` }>
                 Nuevo
             </Link>            
         </div>
@@ -99,7 +99,7 @@ export const GastosTable = ({ page, perPage, keyword }: TableProps) => {
                         { toIsoString(item.fecha)}
                     </td>
                     <td className="text-sm text-gray-900 font-light px-6 ">
-                        <Link href={ `/gastos/${ item.id }` }>
+                        <Link className="btn-primary px-5 py-2 mt-3" href={ `/gastos/${ item.id }` }>
                             Modificar
                         </Link>
                     </td>                    
