@@ -50,10 +50,12 @@ export class Comprobante implements IComprobanteAdmin{
     UsuarioId: number;
     fecha_hora: string;
     items: IComprobanteAdminItem[];
+    impresion?: number;
+    IslaId: number;
     constructor(
         receptor: IReceptor, tipo_comprobante: string, gravadas: number, igv: number, total: number, tarjeta: number, efectivo: number, yape: number,
         ruc: string, UsuarioId: number, items: IComprobanteAdminItem[], placa: string|null, 
-        fecha_abastecimiento: Date|null, tiempo_abastecimiento: number | null, 
+        fecha_abastecimiento: Date|null, tiempo_abastecimiento: number | null, IslaId: number, 
         id_abastecimiento: number = 0, pistola: number = 0, codigo_combustible: string = "", volumen: number = 0, 
         volumen_tanque: number = 0, dec_combustible: string = "", comentario: string = ""
     ) {
@@ -95,6 +97,8 @@ export class Comprobante implements IComprobanteAdmin{
         this.estado_nota_despacho = null;
         this.comprobante_nota_despacho = null;
         this.fecha_facturado_nota_despacho = null;
+        this.impresion = 0;
+        this.IslaId = IslaId;
     }
     toPlainObject() {
         return { ...this };

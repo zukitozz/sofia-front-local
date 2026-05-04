@@ -1,120 +1,134 @@
 "use client";
+
+import { ChangeEvent, useEffect, useState, useMemo } from "react";
 import useSWR from 'swr';
-import { obtieneReporteCierrePorDiaGalones } from '@/actions'
+import * as XLSX from 'xlsx';
+import { IoDownloadOutline, IoCalendarOutline } from "react-icons/io5";
+
+import { obtieneReporteCierrePorDiaGalones } from '@/actions';
 import { currencyFormat, toLocaleOnlyDate } from "@/utils";
-import { ChangeEvent, useEffect, useState } from "react";
 import { IReporteCierrePorDia } from '@/interfaces';
 
-const fetcher = (fecha: string, includeProducts: boolean) => obtieneReporteCierrePorDiaGalones(fecha, includeProducts);
+const fetcher = (fecha: string, includeProducts: boolean) => 
+    obtieneReporteCierrePorDiaGalones(fecha, includeProducts);
 
 export const ReporteDiario = () => {
     const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date()));
-    const { data, error, isValidating, isLoading, mutate } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, (url: string) => fetcher(date, isChecked));
     const [isChecked, setIsChecked] = useState<boolean>(false);
-    const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setDate(e.target.value);
+
+    const { data, error, isValidating, isLoading, mutate } = useSWR(
+        `${process.env.NEXT_PUBLIC_URL}/api-diario-${date}-${isChecked}`, 
+        () => fetcher(date, isChecked)
+    );
+    // Cálculos de totales optimizados
+    const totals = useMemo(() => {
+        if (!Array.isArray(data)) return { sum_ventas: 0, sum_cantidad: 0, sum_total: 0 };
+        return data.reduce((acc, curr) => ({
+            sum_ventas: acc.sum_ventas + curr.ventas,
+            sum_cantidad: acc.sum_cantidad + curr.cantidad,
+            sum_total: acc.sum_total + curr.total
+        }), { sum_ventas: 0, sum_cantidad: 0, sum_total: 0 });
+    }, [data]);
+
+    const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => setDate(e.target.value);
+    const handleCheckChange = (e: ChangeEvent<HTMLInputElement>) => setIsChecked(e.target.checked);
+
+    const exportToExcel = () => {
+        if (!data || data.length === 0) return;
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Cierre Diario");
+        XLSX.writeFile(workbook, `Cierre_Diario_${date}.xlsx`);
     };
-    const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setIsChecked(e.target.checked);
-    };
+
     useEffect(() => {
         mutate();
-    }, [date, isChecked])
-    if(isLoading || isValidating || error || !Array.isArray(data)){
-        return (<div className="flex justify-center items-center mb-7 px-10 sm:px-0"><div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div></div>);
-    }
-    const { sum_ventas, sum_cantidad, sum_total } = data.reduce((a,b) => {
-        return ({
-            sum_ventas: a.sum_ventas + b.ventas,
-            sum_cantidad: a.sum_cantidad + b.cantidad,
-            sum_total: a.sum_total + b.total
-        })
-    }, { sum_ventas: 0, sum_cantidad: 0, sum_total: 0})
-    
-    return (
-        <div className="col-span-2 bg-white rounded-lg shadow-md p-4">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold mb-2">Reporte diario</h2>
-                <label className="flex items-center gap-2">
-                <input 
-                    type="checkbox" 
-                    checked={isChecked} 
-                    onChange={handleOnChange} 
-                />
-                <span>Incluir productos</span>
-                </label>               
-                <input
-                    type="date"
-                    id="start"
-                    name="trip-start"
-                    value={date} 
-                    onChange={handleDateChange} />
+    }, [date, isChecked]);
+
+    if (isLoading || isValidating) {
+        return (
+            <div className="flex justify-center items-center py-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-gray-900 border-b-2"></div>
             </div>
-            <table className="min-w-full">
-                <thead className="bg-gray-200 border-b">
-                    <tr>
-                        <th
-                            scope="col"
-                            className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-                        >
-                            Producto
-                        </th>
-                        <th
-                            scope="col"
-                            className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-                        >
-                            Ventas
-                        </th>                
-                        <th
-                            scope="col"
-                            className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-                        >
-                            Volumen
-                        </th>
-                        <th
-                            scope="col"
-                            className="text-sm font-medium text-gray-900 px-6 py-4 text-left"
-                        >
-                            Total
-                        </th>                                                                        
-                    </tr>
-                </thead>
-                <tbody>
-                    {data?.map((item : IReporteCierrePorDia) => (
-                    <tr
-                        key={item.codigo}
-                        className="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100"
+        );
+    }
+
+    return (
+        <div className="col-span-2 bg-white rounded-lg shadow-md p-6">
+            {/* Encabezado y Controles */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 className="text-xl font-bold text-gray-800">Reporte de Cierre Diario</h2>
+                    <p className="text-sm text-gray-500">Resumen de ventas y galonaje</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    {/* Checkbox estilizado */}
+                    <label className="relative inline-flex items-center cursor-pointer group">
+                        <input 
+                            type="checkbox" 
+                            className="sr-only peer"
+                            checked={isChecked} 
+                            onChange={handleCheckChange} 
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span className="ml-3 text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
+                            Incluir productos
+                        </span>
+                    </label>
+
+                    <button 
+                        onClick={exportToExcel}
+                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all text-sm font-semibold shadow-sm"
                     >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {item.producto}
-                        </td>
-                        <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap">
-                            {item.ventas}
-                        </td>
-                        <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap">
-                            {item.cantidad}
-                        </td>                                                    
-                        <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap">
-                            {currencyFormat(item.total)}
-                        </td>
-                    </tr>
-                    ))}
-                    <tr>
-                        <td className="text-sm text-gray-900 font-bold px-6 py-4 whitespace-nowrap">
-                            TOTAL
-                        </td>
-                        <td className="text-sm text-gray-900 font-bold px-6 py-4 whitespace-nowrap">
-                            {sum_ventas}
-                        </td>
-                        <td className="text-sm text-gray-900 font-bold px-6 py-4 whitespace-nowrap">
-                            {sum_cantidad.toFixed(3)}
-                        </td>                                                    
-                        <td className="text-sm text-gray-900 font-bold px-6 py-4 whitespace-nowrap">
-                            {currencyFormat(sum_total)}
-                        </td>                        
-                    </tr>
-                </tbody>
-            </table>
-        </div>        
+                        <IoDownloadOutline size={20} />
+                        Excel
+                    </button>
+
+                    <div className="flex items-center border rounded-lg px-3 py-1 bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                        <IoCalendarOutline className="text-gray-400 mr-2" size={18} />
+                        <input
+                            type="date"
+                            className="bg-transparent text-sm outline-none text-gray-700"
+                            value={date} 
+                            onChange={handleDateChange} 
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabla */}
+            <div className="overflow-x-auto border rounded-xl">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Producto</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ventas</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Volumen</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {data?.map((item: IReporteCierrePorDia) => (
+                            <tr key={item.codigo} className="hover:bg-blue-50/50 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.producto}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.ventas}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.cantidad.toFixed(3)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{currencyFormat(item.total)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                    {/* Fila de Totales */}
+                    <tfoot className="bg-gray-100 font-bold border-t-2 border-gray-300">
+                        <tr>
+                            <td className="px-6 py-4 text-sm text-gray-900 uppercase">Total General</td>
+                            <td className="px-6 py-4 text-sm text-gray-900">{totals.sum_ventas}</td>
+                            <td className="px-6 py-4 text-sm text-gray-900">{totals.sum_cantidad.toFixed(3)}</td>
+                            <td className="px-6 py-4 text-sm text-blue-700">{currencyFormat(totals.sum_total)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
     );
 }

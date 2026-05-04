@@ -17,17 +17,45 @@ export async function getUserAuth(userForm: IUserForm): Promise<IUser|null> {
     }
 }
 
-export async function getIslaAuth(ip: string): Promise<string> {
-    console.log("Isla auith" + ip)
+interface IIslaReturn{
+    id: number;
+    nombre: string;
+}
+
+export async function getIslaAuth(ip: string): Promise<IIslaReturn> {
+    
     try {
      const user = await executeQuery<any>(
         process.env.DB_DATABASE_AUXILIAR||"", 
-        `SELECT nombre FROM Islas WHERE ip = '${ip}' AND estado = 1`
+        `SELECT id, nombre FROM Islas WHERE ip = '${ip}' AND estado = 1`
     );
-    return user[0]?.nombre || "NO_ISLA";
+    
+    return {
+      id: user[0]?.id,
+      nombre: user[0]?.nombre
+    };
     } catch (error) {
         console.error("Error fetching getUserAuth:");
         console.error(JSON.stringify(error));
-        return "NO_ISLA";
+        return {
+        id: 0,
+        nombre: "NO_ISLA"
+        };
     }
+}
+
+export async function getPistolaAuth(id_isla: number): Promise<number[]> {
+    const retorno:number[] = []
+    try {
+     const pistolas = await executeQuery<any[]>(
+        process.env.DB_DATABASE_AUXILIAR||"", 
+        `SELECT codigo FROM Pistolas WHERE IslaId = ${id_isla}`
+    );
+    pistolas.forEach(pistola => retorno.push(pistola.codigo))
+    return retorno;
+    } catch (error) {
+        console.error("Error fetching getPistolaAuth:");
+        console.error(JSON.stringify(error));
+        throw error;
+    } 
 }

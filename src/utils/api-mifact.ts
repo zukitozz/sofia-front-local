@@ -15,6 +15,13 @@ export interface PropsConsultaRucMiFact {
     direccion: string | null;
 }
 
+interface ResponseMiFact {
+    cadena_para_codigo_qr: string;
+    cdr_sunat: string;
+    codigo_hash: string;
+    correlativo_cpe: string;
+}
+
 export const createOrderApiMiFact = async(comprobante : IComprobanteAdmin): Promise<PropsMiFact> => {
     try {
         const splitted = comprobante.numeracion_comprobante.split("-");
@@ -96,7 +103,7 @@ export const createOrderApiMiFact = async(comprobante : IComprobanteAdmin): Prom
         comprobante.xml_envio = JSON.stringify(body);
         //const { data } = await posApi.post(`${process.env.MIFACT_API}/mifactapi40/invoiceService.svc/SendInvoice`, body);
         const { data } = await posApi.post(`${process.env.NEXT_PUBLIC_MIFACT_API}`, body);
-        console.log("Respuesta de MiFact:", data);
+        //console.log("Respuesta de MiFact:", data);
         if(data.errors){
             comprobante.errors = data.errors;
             return {

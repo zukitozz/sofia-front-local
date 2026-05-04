@@ -2,7 +2,7 @@
 import { Title } from "@/components";
 import { saveDescuento, getReceptorByDocumento } from '@/actions';
 import { useState } from 'react';
-import { IDescuento, IDescuentoTable, IProduct } from '@/interfaces';
+import { IDescuentoTable, IProduct } from '@/interfaces';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IoArrowBack } from "react-icons/io5";

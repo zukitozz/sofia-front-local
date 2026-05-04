@@ -12,7 +12,7 @@ export const ProductsInCart = () => {
     const productsInCart = useOrderAbastecimientoStore( state => state.items );
     const updateProductQuantity = useOrderAbastecimientoStore( state => state.updateProductQuantity );
     const removeProduct = useOrderAbastecimientoStore( state => state.removeProduct );
-    console.log(productsInCart)
+
     useEffect(() => {
         setLoaded(true) ;
     });

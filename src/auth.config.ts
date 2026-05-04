@@ -1,7 +1,7 @@
 import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
-import { getIslaAuth, getUserAuth } from './actions';
+import { getIslaAuth, getUserAuth, getPistolaAuth } from './actions';
 import { mapearUsuarioDBUsuarioLogin } from './utils/supports';
 import { headers } from 'next/headers';
 
@@ -51,20 +51,42 @@ export const authConfig: NextAuthConfig = {
           if ( !parsedCredentials.success ) return null;
 
           const { usuario, password, ip, turno } = parsedCredentials.data;
-          // Buscar el correo
+
+          const headerList = headers();
+
+          const forwardedFor = headerList.get('x-forwarded-for');
+          const realIp = headerList.get('x-real-ip');
+          let ipEncoded = '127.0.0.1';
+
+          if (forwardedFor) {
+            ipEncoded = forwardedFor.split(',')[0].trim();
+          } else if (realIp) {
+            ipEncoded = realIp;
+          }
+
+          if (ipEncoded.includes('::ffff:')) {
+            ipEncoded = ipEncoded.replace(/^.*:ffff:/, '');
+          }
+
+          if (ipEncoded === '::1') {
+            ipEncoded = '127.0.0.1';
+          }          
+
           const user = await getUserAuth({ usuario, password });
           if ( !user ) return null;
         //   // Comparar las contraseñas
           const passwordincoming = Buffer.from(password, 'binary').toString('base64');
           if( passwordincoming !== user.password ) return null;
-        //   // Regresar el usuario sin el password
-          //const { password: _, ...rest } = user;
-          const headerList = headers();
-          const ipFromHeader = headerList.get('x-forwarded-for')||"123";   
-          const ipEncoded = ipFromHeader?.split(',')[0] || '127.0.0.1';       
-          const isla = await getIslaAuth( ipEncoded );
-          //TODO: manejar el caso cuando no hay isla y guardar el logica de logs
-          return mapearUsuarioDBUsuarioLogin(user, isla, turno);
+
+          const {nombre, id} = await getIslaAuth( ipEncoded );
+
+          if (!id) {
+            console.warn(`Intento de login sin Isla asociada para la IP: ${ipEncoded}`);
+          }
+
+          const pistolas = await getPistolaAuth( id );
+
+          return mapearUsuarioDBUsuarioLogin(user, nombre, turno, id, pistolas);
       },
     }),
 

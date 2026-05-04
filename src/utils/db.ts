@@ -55,7 +55,7 @@ import { Session } from 'next-auth';
                 inicio_medidor, fin_medidor, tiempo_abastecimiento, volumen_tanque,
                 comentario, tarjeta, efectivo, yape, placa, billete, producto_precio, ruc, 
                 enviado, estado_nota_despacho, comprobante_nota_despacho, fecha_facturado_nota_despacho,
-                Receptor, UsuarioId, fecha_hora
+                Receptor, UsuarioId, fecha_hora, impresion, IslaId
             } = comprobante;
             const pool: ConnectionPool = await sql.connect(config);
             const transaction: Transaction = new sql.Transaction(pool);
@@ -149,8 +149,10 @@ import { Session } from 'next-auth';
                     sqlRequest.input('UsuarioId', sql.Int, UsuarioId);
                     sqlRequest.input('CierreTurnoId', sql.Int, null);
                     sqlRequest.input('fecha_hora', sql.NVarChar, fecha_hora);
-                    
-                    const result = await sqlRequest.query(`INSERT INTO Comprobantes (
+                    sqlRequest.input('impresion', sql.Int, impresion);
+                    sqlRequest.input('IslaId', sql.Int, IslaId);
+
+                    const query_insert = `INSERT INTO Comprobantes (
                             tipo_comprobante, numeracion_comprobante, fecha_emision, tipo_moneda, tipo_operacion, tipo_nota,
                             tipo_documento_afectado, fecha_documento_afectado, numeracion_documento_afectado,
                             motivo_documento_afectado, total_gravadas, total_igv, total_venta, monto_letras,
@@ -160,7 +162,7 @@ import { Session } from 'next-auth';
                             placa, billete, producto_precio, ruc, enviado, 
                             estado_nota_despacho, comprobante_nota_despacho, fecha_facturado_nota_despacho, 
                             ReceptorId, UsuarioId, CierreTurnoId, fecha_hora, 
-                            gravadas, igv, total
+                            gravadas, igv, total, impresion, IslaId
                         ) VALUES (@tipo_comprobante, @numeracion_comprobante, @fecha_emision, @tipo_moneda, @tipo_operacion, @tipo_nota,
                             @tipo_documento_afectado, @fecha_documento_afectado, @numeracion_documento_afectado,
                             @motivo_documento_afectado, @gravadas, @igv, @total, @monto_letras,
@@ -170,8 +172,9 @@ import { Session } from 'next-auth';
                             @placa, @billete, @producto_precio, @ruc, @enviado, 
                             @estado_nota_despacho, @comprobante_nota_despacho, @fecha_facturado_nota_despacho,
                             @ReceptorId, @UsuarioId, @CierreTurnoId, @fecha_hora, 
-                            @gravadas, @igv, @total
-                        ); SELECT SCOPE_IDENTITY() AS id;`);
+                            @gravadas, @igv, @total, @impresion, @IslaId
+                        ); SELECT SCOPE_IDENTITY() AS id;`
+                    const result = await sqlRequest.query(query_insert);
                     const comprobanteId = result.recordset[0]?.id;
                     //Insertar items
                     for (const item of comprobante.items) {
@@ -205,6 +208,8 @@ import { Session } from 'next-auth';
                 await transaction.commit();
                 return comprobante;
             } catch (err) {
+                console.error("Error executing transaction:");
+                console.error(JSON.stringify(err));
                 await transaction.rollback();
                 throw err;
             }

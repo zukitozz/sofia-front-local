@@ -1,14 +1,14 @@
 "use client";
 import { useState } from "react";
-import { IBillingForm, IComprobanteAdminItem, IOrderItem, IReceptor } from "@/interfaces";
-import { Constants, initialBillingForm, notify, generarTicketComprobante, Print } from "@/utils";
-import { Direccion, NumeroDocumento, Placa, RazonSocial, TipoPago } from "./form-values";
 import { useSession } from "next-auth/react";
-import { saveBilling } from "@/actions";
-import { Comprobante } from "@/model";
 import { useRouter } from "next/navigation";
-import { FloatingMenu } from "./form-values/FloatMenu";
+import { saveBilling } from "@/actions";
 import { useOrderAbastecimientoStore } from "@/store";
+import { Constants, initialBillingForm, notify } from "@/utils";
+import { Direccion, NumeroDocumento, Placa, RazonSocial, TipoPago } from "./form-values";
+import { Comprobante } from "@/model";
+import { FloatingMenu } from "./form-values/FloatMenu";
+import { IBillingForm, IComprobanteAdminItem, IOrderItem, IReceptor } from "@/interfaces";
 
 interface Props {
     total: number;
@@ -20,14 +20,70 @@ interface Props {
 export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
     const router = useRouter();
     const { data: session } = useSession();
+    const [isProcessing, setIsProcessing] = useState(false);
     const removeAllProducts = useOrderAbastecimientoStore((state) => state.removeAllProducts);
-    const [formValues, setFormValues] = useState<IBillingForm>({...initialBillingForm, efectivo: total });
+
+    const [formValues, setFormValues] = useState<IBillingForm>({
+        ...initialBillingForm, 
+        efectivo: total 
+    });
+
     const { tipoComprobante, tipoDocumento, numeroDocumento, razonSocial, placa, direccion, efectivo, tarjeta, yape } = formValues;
+
+    const getTitle = () => {
+        if (tipoDocumento === Constants.TIPO_DOCUMENTO.RUC) return 'FACTURA ELECTRÓNICA';
+        if (tipoDocumento === Constants.TIPO_DOCUMENTO.DNI) return 'BOLETA ELECTRÓNICA';
+        return 'Datos de venta';
+    };
+
+    const validateForm = () => {
+        const sumaPagos = Number(efectivo) + Number(tarjeta) + Number(yape);
+        if (orders.length === 0) {
+            notify({ message: 'No hay productos en la orden', type: 'error' });
+            return false;
+        }
+
+        if (Math.abs(sumaPagos - total) > 0.01) {
+            notify({ message: 'La suma de los pagos no coincide con el total', type: 'error' });
+            return false;
+        }
+
+        if(formValues.numeroDocumento != "0"){
+            if(!tipoDocumento){
+                notify({ message: 'Ingrese un número de documento de 8 u 11 dígitos', type: 'error' });
+                return false;            
+            }
+
+
+            if (tipoDocumento === Constants.TIPO_DOCUMENTO.RUC && numeroDocumento.length !== 11) {
+                notify({ message: 'El RUC debe tener 11 dígitos', type: 'error' });
+                return false;
+            }
+
+            if (tipoDocumento === Constants.TIPO_DOCUMENTO.DNI && numeroDocumento.length !== 8) {
+                notify({ message: 'El DNI debe tener 8 dígitos', type: 'error' });
+                return false;
+            }
+        }        
+
+
+
+        return true;
+    };    
+
     const UsuarioId = +(session?.user.id || 0);
+    const IslaId = +(session?.user.islaId || 0);
 
     const handlerProcessBilling = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        procesarComprobante();
+        if (!validateForm() || isProcessing) return;
+        setIsProcessing(true);
+        try {
+            await procesarComprobante();
+        } finally {
+            setIsProcessing(false);
+            router.push('/')
+        }
     }
 
     const procesarComprobante = async () => {
@@ -60,8 +116,8 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
             items.push(item);
         }
         const order_abastecimiento = orders.find(item => item.id_abastecimiento !== null);
-        const fecha_abastecimiento = order_abastecimiento?.fecha_abastecimiento ? new Date(order_abastecimiento.fecha_abastecimiento) : null;
-        const tiempo_abastecimiento = order_abastecimiento?.tiempo_abastecimiento || null;
+        const fecha_abastecimiento = order_abastecimiento?.fecha_abastecimiento ? new Date(order_abastecimiento.fecha_abastecimiento) : new Date();
+        const tiempo_abastecimiento = order_abastecimiento?.tiempo_abastecimiento || 0;
         const id_abastecimiento = order_abastecimiento?.id_abastecimiento || 1;
         const cantidad = order_abastecimiento?.cantidad || 0;
         const codigo_producto = order_abastecimiento?.codigo_producto || "";
@@ -70,34 +126,24 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
 
         const comprobante = new Comprobante(
             receptor, tipoComprobante, subTotal, totalIgv, total, tarjeta, efectivo, yape, ruc, UsuarioId, items, placa, 
-            fecha_abastecimiento, tiempo_abastecimiento, id_abastecimiento, pistola, codigo_producto, cantidad
+            fecha_abastecimiento, tiempo_abastecimiento, IslaId, id_abastecimiento, pistola, codigo_producto, cantidad
         )
+        
         const { status, message, bill } = await saveBilling(comprobante.toPlainObject());
+
         if(status && bill){
-            const bytes = generarTicketComprobante(bill);
-            removeAllProducts();
-            await Print({bytes})            
             notify({message, type:'success'})
         }else {
             notify({message, type:'error'})
         }
-        router.push('/')
+        removeAllProducts();
+        router.replace('/');
     }
     
     return (
         <>
         <div className="flex justify-between items-center">
-            <div>
-            {(() => {
-                let title = 'Datos de venta';
-                if (formValues.tipoDocumento === Constants.TIPO_DOCUMENTO.RUC) {
-                    title = 'FACTURA ELECTRÓNICA';
-                } else if (formValues.tipoDocumento === Constants.TIPO_DOCUMENTO.DNI) {
-                    title = 'BOLETA ELECTRÓNICA';
-                }
-                return <h2 className="text-2xl mb-2">{title}</h2>;
-            })()}
-            </div>
+            <h2 className="text-2xl mb-2 font-bold text-slate-800">{getTitle()}</h2>
             <FloatingMenu formValues={formValues} setFormValues={setFormValues} state={formValues.numeroDocumento.length === 0} />
         </div>
         <div className="flex flex-col mt-5">
@@ -111,7 +157,7 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
                     <div className="col-span-2">
                         <button className={`${false ? "btn-disabled" : "btn-primary"} px-5 py-2 mt-3 w-full`} disabled={false}
                         type="submit">
-                        Emitir comprobante
+                            {isProcessing ? 'Procesando...' : 'Emitir comprobante'}
                         </button>                        
                     </div>
                 </div>

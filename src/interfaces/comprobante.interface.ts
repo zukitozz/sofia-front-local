@@ -49,6 +49,8 @@ export interface IComprobanteAdmin {
     UsuarioId: number;    
     fecha_hora: string;
     xml_envio?: string;
+    impresion?: number;
+    IslaId: number;
     items: IComprobanteAdminItem[];
 }
 export interface IComprobanteAdminItem {

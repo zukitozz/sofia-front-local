@@ -19,5 +19,7 @@ declare module "next-auth" {
         isla?: string;
         jornada?: string;
         fecha_registro?: string;
+        pistolas?: number[];
+        islaId: number;
     }
   }

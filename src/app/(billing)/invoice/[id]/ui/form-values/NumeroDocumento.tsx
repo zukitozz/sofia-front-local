@@ -29,8 +29,8 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
     };
     useEffect(() => {
         const { numeroDocumento } = formValues;
-        const tipoComprobante = numeroDocumento.length === 11 ? Constants.TIPO_COMPROBANTE.FACTURA : (  numeroDocumento.length === 8 ? Constants.TIPO_COMPROBANTE.BOLETA : '');
-        const tipoDocumento = numeroDocumento.length === 11 ? Constants.TIPO_DOCUMENTO.RUC : (  numeroDocumento.length === 8 ? Constants.TIPO_DOCUMENTO.DNI : '');        
+        const tipoComprobante = numeroDocumento.length === 11 ? Constants.TIPO_COMPROBANTE.FACTURA : (  (numeroDocumento.length === 8 || numeroDocumento === "0") ? Constants.TIPO_COMPROBANTE.BOLETA : '');
+        const tipoDocumento = numeroDocumento.length === 11 ? Constants.TIPO_DOCUMENTO.RUC : (  (numeroDocumento.length === 8 || numeroDocumento === "0") ? Constants.TIPO_DOCUMENTO.DNI : '');        
         setFormValues({ ...formValues, tipoComprobante, tipoDocumento });
     }, [formValues.numeroDocumento])
     

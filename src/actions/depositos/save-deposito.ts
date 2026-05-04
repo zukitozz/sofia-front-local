@@ -2,17 +2,31 @@
 import { IDepositos } from '@/interfaces';
 import { executeQuery } from '@/utils/db';
 
-export async function saveDeposito({ id, concepto, monto, usuario, turno, fecha, UsuarioId }: IDepositos): Promise<IDepositos[]> {
+interface IDepositoStoreResponse {
+    deposito: IDepositos|null;
+    message: string;
+    status: boolean;
+}
+
+export async function saveDeposito({ id, concepto, monto, usuario, turno, fecha, UsuarioId }: IDepositos): Promise<IDepositoStoreResponse> {
+    let message = `Ocurrió un error al registrar depósito`
     try {
         const query = id? `UPDATE Depositos set concepto = '${concepto}', monto = ${monto}, usuario = '${usuario}', turno = '${turno}', fecha = '${fecha}' where id = ${id}` : `INSERT into Depositos (concepto, monto, usuario, turno, fecha, UsuarioId) values ('${concepto}', ${monto}, '${usuario}', '${turno}', '${fecha}', ${UsuarioId})`;
-        const receptor = await executeQuery<IDepositos[]>(
+        await executeQuery<IDepositos[]>(
             process.env.DB_DATABASE_AUXILIAR||"", query
             
         );
-     return receptor as IDepositos[];
+        message = `Depósito almacenado coorrectamente`;
+        return {
+            message,
+            status: true,
+            deposito: null
+        }
     } catch (error) {
-        console.error("Error fetching saveDeposito:");
-        console.error(JSON.stringify(error));
-        throw error;
+        return {
+            message: `${message} | ${JSON.stringify(error)}`,
+            status: false,
+            deposito: null
+        }   
     }
 }

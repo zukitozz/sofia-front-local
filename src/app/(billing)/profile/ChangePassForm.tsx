@@ -1,107 +1,138 @@
-
 "use client";
-import { Title } from "@/components";
-import { useState } from 'react';
-import { changePassword } from "@/actions";
-import { useSession } from "next-auth/react";
 
+import { useState } from 'react';
+import { useSession } from "next-auth/react";
+import { Title } from "@/components";
+import { changePassword } from "@/actions";
 
 export const ChangePasswordForm = () => {
     const { data: session } = useSession();
-    const [password, setPassword] = useState<string>('');
-    const [prevPassword, setPrevPassword] = useState<string>('');
-    const [confirmPassword, setConfirmPassword] = useState<string>('');
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [message, setMessage] = useState<string>('');
+    
+    // Estado centralizado para el formulario
+    const [formData, setFormData] = useState({
+        prevPassword: '',
+        password: '',
+        confirmPassword: ''
+    });
 
-    const handleChangePrevPassword = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setPrevPassword(event.target.value);
+    const [status, setStatus] = useState({
+        isLoading: false,
+        message: '',
+        isError: false
+    });
+
+    const { prevPassword, password, confirmPassword } = formData;
+
+    // Manejador único para todos los inputs
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+        // Limpiar mensaje de error cuando el usuario vuelve a escribir
+        if (status.message) setStatus({ ...status, message: '', isError: false });
     };
 
-    const handleChangeConfirmPassword = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setConfirmPassword(event.target.value);
-    };    
-
-    const handleChangePassword = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setPassword(event.target.value);
-    };
-
-    const handlerProcessPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        setIsLoading(true);
-        if(!password || !prevPassword) {
-            setMessage('Por favor complete todos los campos de contraseña');
-            setIsLoading(false);
-            return;
+
+        // Validaciones básicas de cliente
+        if (!password || !prevPassword || !confirmPassword) {
+            return setStatus({ isLoading: false, message: 'Todos los campos son obligatorios', isError: true });
         }
-        if (password != confirmPassword) {
-            setMessage('Las contraseñas no coinciden');
-            setIsLoading(false);
-            return;
+
+        if (password !== confirmPassword) {
+            return setStatus({ isLoading: false, message: 'Las contraseñas nuevas no coinciden', isError: true });
         }
-        const UsuarioId: number = session?.user?.id ? +session.user.id : 0;
+
+        if (password.length < 6) {
+            return setStatus({ isLoading: false, message: 'La contraseña debe tener al menos 6 caracteres', isError: true });
+        }
+
+        setStatus({ ...status, isLoading: true });
+
+        const usuarioId = Number(session?.user?.id) || 0;
         const isla = session?.user?.isla || 'unknown';
-        const result = await changePassword(UsuarioId, prevPassword, password, isla);
-        if( !result.success ) {
-            setMessage(result.message);
-            setIsLoading(false);
-            return;
+
+        try {
+            const result = await changePassword(usuarioId, prevPassword, password, isla);
+
+            if (!result.success) {
+                setStatus({ isLoading: false, message: result.message, isError: true });
+                return;
+            }
+
+            // Éxito
+            setStatus({ isLoading: false, message: '¡Contraseña actualizada con éxito!', isError: false });
+            setFormData({ prevPassword: '', password: '', confirmPassword: '' }); // Limpiar form
+            
+        } catch (error) {
+            setStatus({ isLoading: false, message: 'Error inesperado en el servidor', isError: true });
         }
-        setIsLoading(false);
-    }
+    };
 
-    return(
-      <div className="flex justify-center items-center mb-72 px-10 sm:px-0">
-        <div className="flex flex-col w-[500px]">
-            <Title title="Cambio de contraseña" />
-            <br/>
-            <form onSubmit={handlerProcessPassword} autoComplete="off" className="flex flex-col">
-                <div className="grid grid-cols-1 gap-3">
-                    <div className='col-span-1'>
-                        <label htmlFor="concepto">Ingrese anterior contraseña</label>
-                        <input
-                            className="px-5 py-2 border bg-gray-200 rounded w-full"
-                            type="password"
-                            name="concepto"
-                            defaultValue={ prevPassword }
-                            onChange={ handleChangePrevPassword }
-                        />
-                    </div>                    
-                    <div className='col-span-1'>
-                        <label htmlFor="concepto">Ingrese su nueva contraseña</label>
-                        <input
-                            className="px-5 py-2 border bg-gray-200 rounded w-full"
-                            type="password"
-                            name="concepto"
-                            defaultValue={ password }
-                            onChange={ handleChangePassword }
-                        />
+    return (
+        <div className="flex justify-center items-center mb-72 px-10 sm:px-0">
+            <div className="flex flex-col w-full max-w-[500px]">
+                <form onSubmit={handleSubmit} className="flex flex-col mt-5">
+                    <div className="grid grid-cols-1 gap-4">
+                        
+                        <div className='flex flex-col'>
+                            <label className="mb-1 text-sm font-medium" htmlFor="prevPassword">Contraseña anterior</label>
+                            <input
+                                id="prevPassword"
+                                name="prevPassword"
+                                type="password"
+                                className="px-4 py-2 border bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                value={prevPassword}
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        <div className='flex flex-col'>
+                            <label className="mb-1 text-sm font-medium" htmlFor="password">Nueva contraseña</label>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                className="px-4 py-2 border bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                value={password}
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        <div className='flex flex-col'>
+                            <label className="mb-1 text-sm font-medium" htmlFor="confirmPassword">Confirmar nueva contraseña</label>
+                            <input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type="password"
+                                className="px-4 py-2 border bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                value={confirmPassword}
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        <div className="mt-2">
+                            {status.message && (
+                                <div className={`p-2 text-sm rounded mb-3 ${status.isError ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                                    {status.message}
+                                </div>
+                            )}
+
+                            <button 
+                                type="submit"
+                                disabled={status.isLoading}
+                                className={`flex justify-center items-center gap-2 w-full px-5 py-2 rounded text-white transition-colors 
+                                    ${status.isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                                {status.isLoading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                                {status.isLoading ? 'Procesando...' : 'Actualizar contraseña'}
+                            </button>
+                        </div>
                     </div>
-                    <div className='col-span-1'>
-                        <label htmlFor="concepto">Repita su nueva contraseña</label>
-                        <input
-                            className="px-5 py-2 border bg-gray-200 rounded w-full"
-                            type="password"
-                            name="concepto"
-                            defaultValue={ confirmPassword }
-                            onChange={ handleChangeConfirmPassword }
-                        />
-                    </div>                 
-                    <div className="col-span-1">
-                        {isLoading && (
-                            <div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div>
-                        )}
-
-                        <button className={`btn-primary px-5 py-2 mt-3 w-full`} disabled={isLoading} type="submit">
-                            Cambiar contraseña
-                        </button>
-                        {message.length > 0 && (
-                            <p style={{ color: 'red' }}>{message}</p>
-                        )}                          
-                    </div>                    
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
-      </div>        
-    )
+    );
 }

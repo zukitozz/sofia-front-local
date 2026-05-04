@@ -3,7 +3,7 @@ import { EstadosAbastecimiento, IAbastecimiento } from '@/interfaces';
 import { executeQuery } from '@/utils/db';
 
 
-export async function getAbastecimientos(estado?: EstadosAbastecimiento): Promise<IAbastecimiento[]> {
+export async function getAbastecimientos(pistolas: number[], estado?: EstadosAbastecimiento): Promise<IAbastecimiento[]> {
     try {
      const abastecimientos = await executeQuery<IAbastecimiento[]>(
         process.env.DB_DATABASE_AUXILIAR||"", 
@@ -13,7 +13,9 @@ export async function getAbastecimientos(estado?: EstadosAbastecimiento): Promis
             p.nombre, p.color, p.medida  
         FROM 
         DEMOSQL.dbo.Abastecimientos a 
-        INNER JOIN Productos p ON a.codigoCombustible = p.codigo${ estado !== undefined ? ' WHERE a.estado = ' + estado : ''}
+        INNER JOIN Productos p ON a.codigoCombustible = p.codigo${ estado !== undefined ? ' WHERE a.estado = ' + estado : ''} 
+        and a.pistola in (${pistolas.join(", ")}) 
+        ORDER BY a.idAbastecimiento desc
         `
     );
      return abastecimientos;

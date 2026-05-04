@@ -16,7 +16,7 @@ export const Historico = () => {
     if(!data || isLoading || isValidating || error || !Array.isArray(data)){
         return (<div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div>);
     }
-    console.log(data);
+    
     return (
         <div className="bg-white rounded-xl shadow-xl p-7 col-span-3">
         <h2 className="text-lg font-semibold mb-2">Histórico (Últimos 2)</h2>

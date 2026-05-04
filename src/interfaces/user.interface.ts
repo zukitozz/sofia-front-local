@@ -25,6 +25,8 @@ export interface IUserLogin {
     isla?: string;
     jornada?: string;
     fecha_registro?: string;
+    islaId: number;
+    pistolas?: number[];
 }
 
 export interface ICambioPasswordResponse {

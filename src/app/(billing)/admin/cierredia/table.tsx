@@ -40,7 +40,7 @@ export const CierreSection = ({ page, perPage, keyword }: TableProps) => {
                 data.map((cierre : ICierreTurno) => (
                     <div key={ cierre.id } className="bg-white rounded-xl shadow-xl p-7 col-span-3">
                         <div className="grid grid-cols-2 gap-2">
-                            <div><b>FECHA:</b> { cierre.fecha?? toLocaleStorage(cierre.fecha) } </div>
+                            <div><b>FECHA:</b> { cierre.fecha? toLocaleStorage(cierre.fecha):'' } </div>
                             <div><b>TURNO:</b> { cierre.turno } </div>
                             <div><b>USUARIO:</b> { cierre.usuario?.nombre } </div>
                             <div><b>ISLA:</b> { cierre.isla } </div>

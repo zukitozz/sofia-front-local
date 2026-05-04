@@ -8,8 +8,8 @@ export default async function Market() {
   return (
     <>
         <Title 
-          title= {`${session?.user?.nombre}'s Market`}
-          subtitle="Todos los productos"
+          title= {`Market`}
+          subtitle= {`${session?.user?.isla} - ${session?.user?.jornada} - ${session?.user?.nombre}`}
           className="mb-1"
         />
 
