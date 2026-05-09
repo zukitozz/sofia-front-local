@@ -14,6 +14,25 @@ interface TableProps {
 
 const fetcher = (page: number, perPage: number, fecha: string) => getHistoricos(page, perPage, fecha);
 
+const getVisiblePages = (current: number, totalPages: number) => {
+    const range = 2; // Cuántas páginas mostrar a los lados de la actual
+    const pages: (number | string)[] = [];
+
+    for (let i = 1; i <= totalPages; i++) {
+        if (
+            i === 1 || // Siempre mostrar la primera
+            i === totalPages || // Siempre mostrar la última
+            (i >= current - range && i <= current + range) // Mostrar rango cercano a la actual
+        ) {
+            pages.push(i);
+        } else if (i === current - range - 1 || i === current + range + 1) {
+            pages.push('...'); // Agregar puntos suspensivos
+        }
+    }
+    // Eliminar duplicados de '...' en caso de que ocurran
+    return pages.filter((item, index) => pages.indexOf(item) === index);
+};
+
 export const HistoricosTable = ({ page, perPage }: TableProps) => {
     const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date()));    
     const [currentPage, setCurrentPage] = useState(1);
@@ -28,7 +47,8 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
     if(!data || isLoading || isValidating || error || !Array.isArray(data.historicos) || !Array.isArray(data.pageNumbers)){
         return (<div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div>);
     }    
-    
+    const totalPages = data.pageNumbers.length;
+    const visiblePages = getVisiblePages(currentPage, totalPages);    
     return (
         <>
         <div className="flex justify-between items-center mb-5">
@@ -167,20 +187,52 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
 
                 
             </tbody>
-            <tfoot>
-                <tr>
-                    <td colSpan={6}>
-                        <div className="flex items-center justify-center" >
-                            {data.pageNumbers.map(number => (
-                            <button key={number} className='p-1' onClick={() => paginate(number)} style={{ fontWeight: currentPage === number ? 'bold' : 'normal' }}>
-                                {number}
-                            </button>
-                            ))}
-                        </div>
-                    </td>
-                </tr>
+            <tfoot className="bg-gray-50">
+                    <tr>
+                        <td colSpan={10} className="px-6 py-3">
+                            <div className="flex items-center justify-center space-x-2">
+                                {/* Botón Anterior */}
+                                <button
+                                    disabled={currentPage === 1}
+                                    onClick={() => paginate(currentPage - 1)}
+                                    className="px-3 py-1 rounded border disabled:opacity-30"
+                                >
+                                    &lt;
+                                </button>
 
-            </tfoot>
+                                {
+                                    visiblePages.map((page, index) => (
+                                        typeof page === 'number' ? (
+                                            <button
+                                                key={index}
+                                                onClick={() => paginate(page)}
+                                                className={`px-3 py-1 rounded border transition-colors ${
+                                                    currentPage === page 
+                                                    ? 'bg-blue-600 text-white font-bold' 
+                                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        ) : (
+                                            <span key={index} className="px-2 text-gray-500">...</span>
+                                        )
+                                    ))
+                                }
+                                
+
+                                {/* Botón Siguiente */}
+                                <button
+                                    disabled={currentPage === totalPages}
+                                    onClick={() => paginate(currentPage + 1)}
+                                    className="px-3 py-1 rounded border disabled:opacity-30"
+                                >
+                                    &gt;
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
         </>
