@@ -4,12 +4,16 @@ interface Props {
     type?: 'success'|'error';
 }
 export const notify = ({message, type = 'success'}:Props) => {
+    const options = {
+        duration: type === 'error' ? 10000 : 5000,
+        position: 'bottom-center' as const, // <-- Esto centra el toast
+    };    
     switch (type) {
         case 'error':
-            toast.error(message, { duration: 10000 });
+            toast.error(message, options);
             break;
         default:
-            toast.success(message, { duration: 5000 });
+            toast.success(message, options);
             break;
     }
 };

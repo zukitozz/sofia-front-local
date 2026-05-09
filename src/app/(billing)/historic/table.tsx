@@ -5,7 +5,6 @@ import { IComprobanteHistorico } from '@/interfaces';
 import Link from 'next/link';
 import { ChangeEvent, SetStateAction, useEffect, useState } from 'react';
 import { toLocaleOnlyDate, toLocaleShow } from '@/utils';
-import { PrintComprobanteButton } from '@/components';
 
 
 interface TableProps {
@@ -162,8 +161,6 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                         {/* <Link href={ `/admin/usuarios/${ item.id }` } className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Modificar
                         </Link> */}
-                        
-                        <PrintComprobanteButton factura={item}/>
                     </td>                    
                 </tr>
                 ))}

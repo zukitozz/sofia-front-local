@@ -3,7 +3,7 @@ import React, { useEffect } from 'react'
 import { getReceptorByDocumento } from '@/actions';
 import { useOrderAbastecimientoStore } from "@/store";
 import { IBillingForm } from '@/interfaces/billing.interface';
-import { Constants } from '@/utils';
+import { Constants, consultaRucMiFact, notify } from '@/utils';
 
 interface Props {
     formValues: IBillingForm;
@@ -19,11 +19,20 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
         if (event.key === 'Enter') {
             event.preventDefault();
             const receptor = await getReceptorByDocumento(formValues.numeroDocumento);
-            if(receptor){
+        if(receptor){
+                notify({message: "Cargando datos del cliente", type:'success'})
                 setFormValues({ ...formValues, razonSocial: receptor.razon_social, direccion: receptor.direccion, placa: receptor.placa });
                 applyDiscountIfExists(formValues.numeroDocumento)
             }else{
-                setFormValues({ ...formValues, razonSocial: '', direccion: '', placa: '' });
+                const {hasErrorMiFact, messageMiFact, razon_social, direccion} = await consultaRucMiFact(formValues.numeroDocumento);
+                if(!hasErrorMiFact && razon_social && direccion){
+                    notify({message: "Cargando datos de SUNAT", type:'success'})
+                    setFormValues({ ...formValues, razonSocial: razon_social, direccion: direccion });
+                }else{
+                    notify({message: "Ruc no encontrado se realiza el registro", type:'success'})
+                    setFormValues({ ...formValues, razonSocial: '', direccion: '', placa: '' });
+                } 
+                
             }
         }
     };
