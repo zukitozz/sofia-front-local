@@ -8,6 +8,7 @@ import { Title } from "@/components";
 import { saveProducto } from '@/actions';
 import { IProduct } from '@/interfaces';
 import { notify } from "@/utils";
+import { UploadButton } from '@/utils/uploadthing';
 
 interface Props {
   product: IProduct;
@@ -135,6 +136,48 @@ return (
                 required
               />
             </div>
+            <UploadButton
+              endpoint="imageUploader"
+              appearance={{
+                // Contenedor general del botón
+                container: "flex flex-col items-start gap-2 w-full",
+                
+                // El botón interactivo principal
+                button: ({ ready, isUploading }) => `
+                  w-full px-5 py-2 text-sm font-semibold rounded shadow-sm border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                  ${ready 
+                    ? "bg-slate-800 text-white hover:bg-slate-700 cursor-pointer border-slate-800" 
+                    : "bg-slate-200 text-slate-400 cursor-not-allowed border-slate-200"}
+                  ${isUploading ? "bg-blue-600 animate-pulse text-white border-blue-600" : ""}
+                `,
+                
+                // Texto informativo debajo del botón (ej: "Acepta imágenes de hasta 4MB")
+                allowedContent: "text-xs text-slate-500 font-medium mt-1",
+              }}
+              content={{
+                // Puedes personalizar el texto de los estados internos si lo deseas
+                button({ ready, isUploading }) {
+                  if (isUploading) return "Subiendo imagen...";
+                  if (ready) return "Seleccionar Imagen";
+                  return "Cargando motor...";
+                },
+                allowedContent: "Imágenes de hasta 4MB",
+              }}
+              onClientUploadComplete={(res) => {
+                console.log("Files: ", res);
+                // Tip Senior: Aquí deberías actualizar tu estado dinámico para guardar la URL en el formulario
+                if (res && res[0]) {
+                  setFormValues({
+                    ...formValues,
+                    img: res[0].ufsUrl // O el campo exacto que devuelva tu configuración
+                  });
+                }
+                notify({ message: "Imagen subida con éxito" });
+              }}
+              onUploadError={(error: Error) => {
+                notify({ message: `Error al subir: ${error.message}`, type: "error" });
+              }}
+            />
 
             {/* Botón de envío */}
             <div className="sm:col-span-2">

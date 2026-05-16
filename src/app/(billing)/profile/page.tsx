@@ -4,7 +4,6 @@ import { ChangePasswordForm } from "./ChangePassForm";
 
 export default async function Perfil() {
     const session = await auth();
-    //console.log(session)
     return (
         <>
             <Title 

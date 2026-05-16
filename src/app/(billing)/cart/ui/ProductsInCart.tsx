@@ -40,11 +40,12 @@ export const ProductsInCart = () => {
                             {product.descripcion}
                             </Link>
                             
-                            <p>{currencyFormat(product.precio)}</p>
+                            <p>Precio: {currencyFormat(product.precio_unitario)}</p>
                             {
                                 !product.id_abastecimiento && (
                                     <QuantitySelector 
                                     quantity={ product.cantidad } 
+                                    type = { product.medida }                                    
                                     onQuantityChanged={ quantity => updateProductQuantity(product, quantity) }
                                     />                                    
                                 )

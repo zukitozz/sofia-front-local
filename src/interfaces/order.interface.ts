@@ -63,4 +63,5 @@ export interface IOrderItem {
     total_final?: number;
     img?: string;
     nombre_producto?: string;
+    descuento_aplicado?: boolean;
 }

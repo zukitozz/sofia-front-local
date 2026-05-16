@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { saveBilling } from "@/actions";
@@ -27,6 +27,11 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
         ...initialBillingForm, 
         efectivo: total 
     });
+
+    useEffect(() => {
+        setFormValues(prevValues => ({ ...prevValues, efectivo: total }));
+    }, [total])
+    
 
     const { tipoComprobante, tipoDocumento, numeroDocumento, razonSocial, placa, direccion, efectivo, tarjeta, yape } = formValues;
 

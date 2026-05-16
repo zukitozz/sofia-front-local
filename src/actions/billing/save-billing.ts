@@ -1,6 +1,6 @@
 'use server';
 import { IComprobanteAdmin } from '@/interfaces';
-import { saveBillingTransaction } from '@/utils/db';
+import { executeQuery, saveBillingTransaction } from '@/utils/db';
 
 interface IComprobanteStoreResponse {
     bill: IComprobanteAdmin|null;
@@ -27,4 +27,29 @@ export async function saveBilling(comprobante: IComprobanteAdmin): Promise<IComp
             bill: null
         }            
     }   
+}
+interface IReprintResponse {
+    message: string;
+    status: boolean;
+}
+
+export async function reprintBilling(id: number): Promise<IReprintResponse> {
+    let message = `Ocurrió un error al solicitar reimpresión del comprobante`
+    try {
+        const query = `UPDATE Comprobantes set impresion = 0 where id = ${id}`;
+        await executeQuery(
+            process.env.DB_DATABASE_AUXILIAR||"", query
+            
+        );
+        message = `Reimpresión del comprobante solicitada, espere unos segundos`;
+        return {
+            message,
+            status: true
+        }
+    } catch (error) {
+        return {
+            message: `${message} | ${JSON.stringify(error)}`,
+            status: false
+        }   
+    }
 }

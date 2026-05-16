@@ -12,7 +12,7 @@ interface State {
     addProductToOrder: (product: IProduct ) => void;
     getSummaryInformation: () => { subTotal: number; totalIgv: number; total: number };
     removeProduct: (product: IOrderItem) => void;
-    applyDiscountIfExists: (numeroDocumento: string) => Promise<void>;
+    applyDiscountIfExists: (numeroDocumento: string) => Promise<{ status: boolean; message: string }>;
     removeAllProducts: () => void;
 }
 
@@ -115,23 +115,26 @@ export const useOrderAbastecimientoStore = create<State>()(
                 set({ items: updatedItems });
             },
             applyDiscountIfExists: async (numeroDocumento: string) => {
-                if(!numeroDocumento) return;
+                let status = false;
+                if(!numeroDocumento) return { status, message: "Número de documento no válido" };
                 const descuentos = await getDescuentosByNumeroDocumento(numeroDocumento);
                 const { items } = get();
                 const updatedItems = items.map((item) => {
                     const descuento = descuentos.find(desc => desc.codigo_producto === item.codigo_producto);
-                    if(descuento){
+                    if(descuento && !item.descuento_aplicado){
+                        status = true;
                         const taxRate = Number.parseFloat(process.env.NEXT_PUBLIC_TAX || "0.18");
                         const precioConDescuento = Math.round((item.precio - descuento.monto_descuento)*100)/100;
                         const valorConDescuento = Math.round((precioConDescuento/(1 + taxRate))*10000000000)/10000000000;
                         const igvConDescuento = Math.round((precioConDescuento - valorConDescuento)*100)/100;
                         const valorUnitarioConDescuento = Math.round((item.valor_unitario - (descuento.monto_descuento/item.cantidad))*10000000000)/10000000000;
                         const precioUnitarioConDescuento = Math.round((valorUnitarioConDescuento*(1 + taxRate))*10000000000)/10000000000;
-                        return { ...item, precio: precioConDescuento, valor: valorConDescuento, igv: igvConDescuento, valor_unitario: valorUnitarioConDescuento, precio_unitario: precioUnitarioConDescuento };
+                        return { ...item, precio: precioConDescuento, valor: valorConDescuento, igv: igvConDescuento, valor_unitario: valorUnitarioConDescuento, precio_unitario: precioUnitarioConDescuento, descuento_aplicado: true };
                     }
                     return item;
                 });
-                set({ items: updatedItems });                
+                set({ items: updatedItems });
+                return { status, message: "Descuentos aplicados correctamente" };
             },
             removeAllProducts: () => {
                 set({ items: [] });

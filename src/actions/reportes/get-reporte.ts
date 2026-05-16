@@ -3,16 +3,17 @@ import { executeQuery } from '@/utils/db';
 import { IReporteCierrePorDia, IReporteDeclaracionMensual } from "@/interfaces";
 
 export async function obtieneReporteCierrePorDiaGalones(fecha: string, includeProducts: boolean): Promise<IReporteCierrePorDia[]> { 
-    const cierres = await executeQuery<IReporteCierrePorDia[]>(
-        process.env.DB_DATABASE_AUXILIAR||"", 
-        `
+    const query =     `
             select ctd.codigo,ctd.producto,COUNT(ctd.total_cantidad) + COUNT(ctd.calibracion_cantidad) + COUNT(ctd.despacho_cantidad) as ventas,SUM(ctd.total_cantidad) + SUM(ctd.calibracion_cantidad) + SUM(ctd.despacho_cantidad) as cantidad,SUM(ctd.total_soles) + SUM(ctd.calibracion_soles) + SUM(ctd.despacho_soles) as total
             from Cierreturnos t 
             inner join Cierredias d on t.CierrediaId = d.id 
             inner join Cierreturnosdetalle ctd on t.id = ctd.CierreturnoId 
             where CAST(d.fecha AS DATE) = '${fecha}' ${includeProducts?"":"and ctd.medida = 'GLL' "}
             group by ctd.codigo, ctd.producto
-        `
+        `;
+    console.log("Query de reporte de cierre por día:", query);
+    const cierres = await executeQuery<IReporteCierrePorDia[]>(
+        process.env.DB_DATABASE_AUXILIAR||"", query
     );    
     return cierres;
 }

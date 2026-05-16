@@ -94,7 +94,7 @@ export const CierreVentas = () => {
         if (!data || !stats || stats.balanceFinal === 0) return;
         setIsProcessing(true);
         try{
-            const { message, status } = await saveCierreTurno(session, stats.balanceFinal, data.soles, data.productos)
+            const { message, status } = await saveCierreTurno(session, stats.totTipoPago, data.soles, data.productos)
             if(status){          
                 notify({message})
             }else{
@@ -210,7 +210,7 @@ export const CierreVentas = () => {
 
             <button 
                 className="btn-primary px-5 py-3 mt-4 w-full text-lg shadow-lg active:scale-95 transition-transform"
-                onClick={handlerProcessCierre}
+                onClick={handlerProcessCierre} disabled={isProcessing}
             >
                 Imprimir y Cerrar Turno
             </button> 

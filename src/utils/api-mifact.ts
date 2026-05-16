@@ -101,9 +101,9 @@ export const createOrderApiMiFact = async(comprobante : IComprobanteAdmin): Prom
           ]
         }
         comprobante.xml_envio = JSON.stringify(body);
-        //const { data } = await posApi.post(`${process.env.MIFACT_API}/mifactapi40/invoiceService.svc/SendInvoice`, body);
+        
         const { data } = await posApi.post(`${process.env.NEXT_PUBLIC_MIFACT_API}`, body);
-        //console.log("Respuesta de MiFact:", data);
+
         if(data.errors){
             comprobante.errors = data.errors;
             return {
@@ -121,7 +121,7 @@ export const createOrderApiMiFact = async(comprobante : IComprobanteAdmin): Prom
             }
         }
     } catch (error: any) {
-        console.log("Error en createOrderApiMiFact:", error);
+        
         if ( axios.isAxiosError(error) ) {
             return {
                 hasErrorMiFact: true,
