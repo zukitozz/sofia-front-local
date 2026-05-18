@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import { obtieneCierreDia, saveCierreDia } from '@/actions'
 import { ICierreTurno, ICierreTurnoDetalle } from '@/interfaces';
 import { currencyFormat, toLocaleStorage } from '@/utils';
-
+import { useSession } from "next-auth/react";
 interface TableProps {
   page: number;
   perPage: number;
@@ -14,6 +14,7 @@ interface TableProps {
 const fetcher = (page: number, perPage: number, keyword?: string) => obtieneCierreDia();
 //TODO Cierre turno agregar turno e isla
 export const CierreSection = ({ page, perPage, keyword }: TableProps) => {
+    const { data: session } = useSession();
     const { data, error, isLoading, isValidating } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, (url: string) => fetcher(page, perPage, keyword));
     if(!data || isLoading || isValidating || error || !Array.isArray(data)){
         return (<div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div>);
@@ -24,8 +25,10 @@ export const CierreSection = ({ page, perPage, keyword }: TableProps) => {
         })
     }, { total: 0 });
 
+    const isla = session?.user.isla || "";
+
     const handlerProcessCierre = async () => {      
-        await saveCierreDia(total);
+        await saveCierreDia(total, isla);
     }  
 
     return(

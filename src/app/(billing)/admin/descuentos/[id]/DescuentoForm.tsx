@@ -6,6 +6,8 @@ import { IDescuentoTable, IProduct } from '@/interfaces';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IoArrowBack } from "react-icons/io5";
+import { notify } from "@/utils/notify";
+import { consultaRucMiFact } from "@/utils/api-mifact";
 
 interface Props {
   descuento: IDescuentoTable
@@ -33,14 +35,22 @@ export const DescuentosForm = ({ descuento, productos }: Props) => {
             event.preventDefault();
             const receptor = await getReceptorByDocumento(formValues.numero_documento);
             if(receptor){
+                notify({message: "Cargando datos del cliente", type:'success'})
                 setFormValues({ ...formValues,  cliente: receptor.razon_social });
             }else{
-                setFormValues({ ...formValues, cliente: '' });
+                const { hasErrorMiFact, razon_social } = await consultaRucMiFact(formValues.numero_documento);
+                if(!hasErrorMiFact && razon_social){
+                    notify({message: "Cargando datos de SUNAT", type:'success'})
+                    setFormValues({ ...formValues, cliente: razon_social });
+                }else{
+                    setFormValues({ ...formValues, cliente: '' });
+                    notify({message: "Cliente no encontrado ingrese manualmente", type:'success'})
+                }
+                
             }
         }
     };    
     const handlerProcessBilling = async (event: React.FormEvent<HTMLFormElement>) => {
-        //TODO: Validar
         event.preventDefault();
         await saveDescuento(formValues);
         router.push('/admin/descuentos')

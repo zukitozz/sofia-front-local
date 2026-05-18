@@ -20,6 +20,7 @@ export const DepositosForm = ({ deposito }: Props) => {
 
     const [loading, setLoading] = useState(false);
     const [formValues, setFormValues] = useState<IDepositos>(deposito);
+    const [montoValue, setMontoValue] = useState<number | string>(deposito.monto );
 
     const isNew = deposito.id==0;
 
@@ -29,6 +30,25 @@ export const DepositosForm = ({ deposito }: Props) => {
     } else if (isNew) {
       buttonLabel = 'Registrar depósito';
     }
+
+    const handleMontoChange   = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const val = event.target.value;
+        if (val === '') {
+            setMontoValue('');
+            return;
+        }
+        const value = Number(event.target.value);
+        if ( Number.isNaN(value) || value < 0.1 ) return;
+        setMontoValue(value);
+        setFormValues({
+            ...formValues,
+            monto: Number(value)
+        });        
+    };
+
+    const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
+        event.target.select();
+    };    
 
     const onInputChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = target;
@@ -106,8 +126,9 @@ export const DepositosForm = ({ deposito }: Props) => {
                             type="number"
                             step="0.01"
                             name="monto" 
-                            value={formValues.monto}
-                            onChange={onInputChange}
+                            value={montoValue}
+                            onFocus={handleFocus}
+                            onChange={handleMontoChange}
                         />
                     </div>
                     <div className="sm:col-span-2">

@@ -43,7 +43,7 @@ export const Placa = ({ formValues, setFormValues }: Props) => {
         }
     };    
 
-    return tipoDocumento !== Constants.TIPO_DOCUMENTO.DNI && (
+    return (
         <div className="col-span-1">
             <label htmlFor="placa">Placa</label>
             <input

@@ -300,7 +300,7 @@ import { Session } from 'next-auth';
         }
     }
 
-    export async function saveCierreDiaTransaction(total: number){
+    export async function saveCierreDiaTransaction(total: number, isla: string){
         config.database = process.env.DB_DATABASE_AUXILIAR||"";
         try {
             const pool: ConnectionPool = await sql.connect(config);
@@ -309,11 +309,12 @@ import { Session } from 'next-auth';
             //Insertar cierre
             const sqlRequest = new sql.Request(transaction);
             sqlRequest.input('total', sql.Float, total);
+            sqlRequest.input('isla', sql.NVarChar, isla);
 
             const result = await sqlRequest.query(`INSERT INTO Cierredias (
-                total, fecha, estado
+                total, fecha, isla, estado
             ) VALUES ( 
-                @total, GETDATE(), 1
+                @total, GETDATE(), @isla, 1
             ); SELECT SCOPE_IDENTITY() AS id;`);
             
             const cierrediaId = result.recordset[0]?.id;

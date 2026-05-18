@@ -20,6 +20,7 @@ export const GastosForm = ({ gasto }: Props) => {
 
     const [loading, setLoading] = useState(false);
     const [formValues, setFormValues] = useState<IGastos>(gasto);
+    const [montoValue, setMontoValue] = useState<number | string>(gasto.monto );
 
     const isNew = gasto.id==0;
 
@@ -30,11 +31,30 @@ export const GastosForm = ({ gasto }: Props) => {
       buttonLabel = 'Registrar gasto';
     }    
 
+    const handleMontoChange   = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const val = event.target.value;
+        if (val === '') {
+            setMontoValue('');
+            return;
+        }
+        const value = Number(event.target.value);
+        if ( Number.isNaN(value) || value < 0.1 ) return;
+        setMontoValue(value);
+        setFormValues({
+            ...formValues,
+            monto: Number(value)
+        });        
+    };
+
+    const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
+        event.target.select();
+    };
+
     const onInputChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = target;
         setFormValues({
         ...formValues,
-        [name]: name === 'monto' ? Number(value) : value
+        [name]: value
         });
     };    
 
@@ -105,8 +125,9 @@ export const GastosForm = ({ gasto }: Props) => {
                             type="number"
                             step="0.01"
                             name="monto" 
-                            value={formValues.monto}
-                            onChange={onInputChange}
+                            value={montoValue}
+                            onFocus={handleFocus}
+                            onChange={handleMontoChange}
                         />
                     </div>
                      <div className='flex flex-col'>

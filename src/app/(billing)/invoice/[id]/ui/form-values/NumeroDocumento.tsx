@@ -62,7 +62,7 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
     }, [formValues.numeroDocumento])
     
     return (
-        <div className={`${formValues.tipoDocumento === Constants.TIPO_DOCUMENTO.DNI ? 'col-span-2' : 'col-span-1'}`}>
+        <div className='col-span-1'>
             <label htmlFor="numeroDocumento">{`${formValues.tipoDocumento === Constants.TIPO_DOCUMENTO.RUC ? 'RUC' : formValues.tipoDocumento === Constants.TIPO_DOCUMENTO.DNI ? 'DNI' : 'Número documento'}`}
             </label>
             <input
