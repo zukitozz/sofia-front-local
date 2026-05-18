@@ -11,7 +11,7 @@ interface Props{
 
 export const AbastecimientoGrid = ({ pistolas }: Props) => {
     const { data } = useSWR<IAbastecimiento[]>(`${process.env.NEXT_PUBLIC_URL}/api/abastecimientos`, 
-        () => getAbastecimientos(pistolas, Constants.ESTADOS_ABASTECIMIENTO.PENDIENTE)
+        () => getAbastecimientos(pistolas, Constants.ESTADOS_ABASTECIMIENTO.PENDIENTE), { refreshInterval: 2000  }
     );
     return (
         <>

@@ -149,7 +149,7 @@ import { Session } from 'next-auth';
                     sqlRequest.input('UsuarioId', sql.Int, UsuarioId);
                     sqlRequest.input('CierreTurnoId', sql.Int, null);
                     sqlRequest.input('fecha_hora', sql.NVarChar, fecha_hora);
-                    sqlRequest.input('impresion', sql.Int, impresion);
+                    sqlRequest.input('impresion', sql.Int, Receptor.numero_documento === '0'?1:impresion);
                     sqlRequest.input('IslaId', sql.Int, IslaId);
 
                     const query_insert = `INSERT INTO Comprobantes (

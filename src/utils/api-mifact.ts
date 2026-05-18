@@ -53,9 +53,9 @@ export const createOrderApiMiFact = async(comprobante : IComprobanteAdmin): Prom
             )
         });
         const body = {
-            "TOKEN":"gN8zNRBV+/FVxTLwdaZx0w==", // token del emisor, este token gN8zNRBV+/FVxTLwdaZx0w== es de pruebas
+            "TOKEN":process.env.NEXT_PUBLIC_TOKEN_BILL_MIFACT, // token del emisor, este token gN8zNRBV+/FVxTLwdaZx0w== es de pruebas
             "COD_TIP_NIF_EMIS": "6",
-            "NUM_NIF_EMIS": "20100100100",//20100100100            
+            "NUM_NIF_EMIS": process.env.NEXT_PUBLIC_RUC_MIFACT,//20100100100            
             // "TOKEN":"tOcEEdPoW/SnZ0lYcWH/eA==", // token del emisor, este token gN8zNRBV+/FVxTLwdaZx0w== es de pruebas
             // "COD_TIP_NIF_EMIS": "6",
             // "NUM_NIF_EMIS": "20609785269",
