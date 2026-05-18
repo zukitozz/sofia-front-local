@@ -69,7 +69,12 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
                 notify({ message: 'El DNI debe tener 8 dígitos', type: 'error' });
                 return false;
             }
-        }        
+        }    
+        
+        if(!formValues.razonSocial || formValues.razonSocial.trim() === "0"){
+            notify({ message: 'Ingrese la razón social', type: 'error' });
+            return false;
+        }    
 
 
 
