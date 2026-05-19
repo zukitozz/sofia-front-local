@@ -5,44 +5,41 @@ import useSWR from 'swr';
 import * as XLSX from 'xlsx';
 import { IoDownloadOutline, IoCalendarOutline } from "react-icons/io5";
 
-import { obtieneReporteCierrePorDiaGalones } from '@/actions';
-import { currencyFormat, toLocaleOnlyDate } from "@/utils";
-import { IReporteCierrePorDia } from '@/interfaces';
+import { obtieneReporteCierrePorDia } from '@/actions';
+import { currencyFormat, toLocaleOnlyDate, toLocaleShow } from "@/utils";
+import { IReporteCierrePorDia, IReporteCierreTurno } from '@/interfaces';
 
-const fetcher = (fecha: string, includeProducts: boolean) => 
-    obtieneReporteCierrePorDiaGalones(fecha, includeProducts);
+const fetcher = (fecha: string) => 
+    obtieneReporteCierrePorDia(fecha);
 
-export const ReporteDiario = () => {
+export const ReporteCierreTurnos = () => {
     const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date()));
-    const [isChecked, setIsChecked] = useState<boolean>(false);
 
     const { data, error, isValidating, isLoading, mutate } = useSWR(
-        `${process.env.NEXT_PUBLIC_URL}/api-diario-${date}-${isChecked}`, 
-        () => fetcher(date, isChecked)
+        `${process.env.NEXT_PUBLIC_URL}/api-cierres`, 
+        () => fetcher(date)
     );
     // Cálculos de totales optimizados
     const totals = useMemo(() => {
-        if (!Array.isArray(data)) return { sum_ventas: 0, sum_cantidad: 0, sum_total: 0 };
+        if (!Array.isArray(data)) return { sum_total: 0 };
         return data.reduce((acc, curr) => ({
-            sum_cantidad: acc.sum_cantidad + curr.cantidad,
             sum_total: acc.sum_total + curr.total
-        }), { sum_cantidad: 0, sum_total: 0 });
-    }, [data]);
+        }), { sum_total: 0 });
+    }, [data]);    
 
     const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => setDate(e.target.value);
-    const handleCheckChange = (e: ChangeEvent<HTMLInputElement>) => setIsChecked(e.target.checked);
 
     const exportToExcel = () => {
         if (!data || data.length === 0) return;
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Cierre Diario");
-        XLSX.writeFile(workbook, `Cierre_Diario_${date}.xlsx`);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Cierre Turno");
+        XLSX.writeFile(workbook, `Cierre_Turno_${date}.xlsx`);
     };
 
     useEffect(() => {
         mutate();
-    }, [date, isChecked]);
+    }, [date]);
 
     if (isLoading || isValidating) {
         return (
@@ -57,24 +54,12 @@ export const ReporteDiario = () => {
             {/* Encabezado y Controles */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-800">Reporte de Cierre Diario</h2>
-                    <p className="text-sm text-gray-500">Resumen de ventas y galonaje</p>
+                    <h2 className="text-xl font-bold text-gray-800">Reporte de Cierre Turnos</h2>
+                    <p className="text-sm text-gray-500">Por usuario y tipo de pago</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
                     {/* Checkbox estilizado */}
-                    <label className="relative inline-flex items-center cursor-pointer group">
-                        <input 
-                            type="checkbox" 
-                            className="sr-only peer"
-                            checked={isChecked} 
-                            onChange={handleCheckChange} 
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span className="ml-3 text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
-                            Incluir productos
-                        </span>
-                    </label>
 
                     <button 
                         onClick={exportToExcel}
@@ -101,16 +86,18 @@ export const ReporteDiario = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Producto</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cantidad</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Turno</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Usuario</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {data?.map((item: IReporteCierrePorDia) => (
-                            <tr key={item.codigo} className="hover:bg-blue-50/50 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.producto}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.cantidad.toFixed(3)}</td>
+                        {data?.map((item: IReporteCierreTurno) => (
+                            <tr key={item.nombre} className="hover:bg-blue-50/50 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.turno}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{toLocaleShow(item.fecha)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nombre}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{currencyFormat(item.total)}</td>
                             </tr>
                         ))}
@@ -119,7 +106,8 @@ export const ReporteDiario = () => {
                     <tfoot className="bg-gray-100 font-bold border-t-2 border-gray-300">
                         <tr>
                             <td className="px-6 py-4 text-sm text-gray-900 uppercase">Total General</td>
-                            <td className="px-6 py-4 text-sm text-gray-900">{totals.sum_cantidad.toFixed(3)}</td>
+                            <td className="px-6 py-4 text-sm text-gray-900"></td>
+                            <td className="px-6 py-4 text-sm text-gray-900"></td>
                             <td className="px-6 py-4 text-sm text-blue-700">{currencyFormat(totals.sum_total)}</td>
                         </tr>
                     </tfoot>

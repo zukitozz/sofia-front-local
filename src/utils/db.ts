@@ -48,7 +48,7 @@ import { Session } from 'next-auth';
         config.database = process.env.DB_DATABASE_AUXILIAR||"";
         try {
             const { 
-                tipo_comprobante, fecha_emision, moneda, tipo_operacion, tipo_nota,
+                tipo_comprobante, fecha_emision, tipo_moneda, tipo_operacion, tipo_nota,
                 tipo_documento_afectado, fecha_documento_afectado, numeracion_documento_afectado,
                 motivo_documento_afectado, gravadas, igv, total, monto_letras, fecha_abastecimiento,
                 id_abastecimiento, pistola, codigo_combustible, dec_combustible, volumen,
@@ -82,6 +82,7 @@ import { Session } from 'next-auth';
                     sqlSerieRequest.input('tipo_comprobante', sql.NVarChar, tipo_comprobante);
                     sqlSerieRequest.input('tipo_facturacion', sql.NVarChar, 'FACTURAS_BOLETAS_NC_INTERNA');
                     const serie = await sqlSerieRequest.query(`SELECT serie from Series c where tipo_comprobante = @tipo_comprobante and codigo_proposito= @tipo_facturacion`);
+                    console.log("Resultado de consulta de serie:", serie);
                     const serieId = serie.recordset[0]?.serie;
                     const sqlCorrelativoRequest = new sql.Request(transaction);
                     sqlCorrelativoRequest.input('idTipoDocumento', sql.NVarChar, tipo_comprobante);
@@ -91,6 +92,7 @@ import { Session } from 'next-auth';
                     sqlCorrelativoRequest.output('correlativo', sql.NVarChar);
                     sqlCorrelativoRequest.output('resultado', sql.Char);
                     const correlativo = await sqlCorrelativoRequest.execute(`dbo.spCorrelativoObtener`);
+                    console.log("Resultado de consulta de correlativo:", correlativo);
                     if (correlativo.output['resultado'].trim() !== Constants.STATE_SQL_TRANSACTION.SUCCESS) {
                         throw new Error('Error al obtener correlativo: ' + correlativo.output['resultado'].trim());
                     }
@@ -106,13 +108,14 @@ import { Session } from 'next-auth';
                     sqlReceptorRequest.input('usuario', sql.Int, UsuarioId);
                     sqlReceptorRequest.output('resultado', sql.Int);
                     const receptor = await sqlReceptorRequest.execute(`dbo.spReceptorCrear`);
+                    console.log("Resultado de consulta de receptor:", receptor);
                     const id_receptor = receptor.output['resultado']
                     //Insertar comprobante
                     const sqlRequest = new sql.Request(transaction);
                     sqlRequest.input('tipo_comprobante', sql.NVarChar, tipo_comprobante);
                     sqlRequest.input('numeracion_comprobante', sql.NVarChar, numeracion_comprobante);
                     sqlRequest.input('fecha_emision', sql.NVarChar, fecha_emision);
-                    sqlRequest.input('tipo_moneda', sql.NVarChar, moneda);
+                    sqlRequest.input('tipo_moneda', sql.NVarChar, tipo_moneda);
                     sqlRequest.input('tipo_operacion', sql.NVarChar, tipo_operacion);
                     sqlRequest.input('tipo_nota', sql.NVarChar, tipo_nota);
                     sqlRequest.input('tipo_documento_afectado', sql.NVarChar, tipo_documento_afectado);
@@ -175,6 +178,7 @@ import { Session } from 'next-auth';
                             @gravadas, @igv, @total, @impresion, @IslaId
                         ); SELECT SCOPE_IDENTITY() AS id;`
                     const result = await sqlRequest.query(query_insert);
+                    console.log("Resultado de inserción de comprobante:", result);
                     const comprobanteId = result.recordset[0]?.id;
                     //Insertar items
                     for (const item of comprobante.items) {

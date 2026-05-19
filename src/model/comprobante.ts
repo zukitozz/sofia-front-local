@@ -8,7 +8,7 @@ export class Comprobante implements IComprobanteAdmin{
     numeracion: string;
     numeracion_comprobante: string;
     fecha_emision: string;
-    moneda: string;
+    tipo_moneda: string;
     tipo_operacion: string;
     tipo_nota: string | null;
     tipo_documento_afectado: string | null;
@@ -63,7 +63,7 @@ export class Comprobante implements IComprobanteAdmin{
         this.numeracion = "";
         this.numeracion_comprobante = "";
         this.fecha_emision = toLocaleStorage(new Date());
-        this.moneda = "PEN";
+        this.tipo_moneda = "PEN";
         this.tipo_operacion = "0101";
         this.tipo_nota = null;
         this.tipo_documento_afectado = null;

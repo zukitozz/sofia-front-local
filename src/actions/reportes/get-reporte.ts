@@ -1,17 +1,18 @@
 "use server";
 import { executeQuery } from '@/utils/db';
-import { IReporteCierrePorDia, IReporteDeclaracionMensual } from "@/interfaces";
+import { IReporteCierrePorDia, IReporteCierreTurno, IReporteDeclaracionMensual } from "@/interfaces";
 
 export async function obtieneReporteCierrePorDiaGalones(fecha: string, includeProducts: boolean): Promise<IReporteCierrePorDia[]> { 
     const query =     `
-            select ctd.codigo,ctd.producto,COUNT(ctd.total_cantidad) + COUNT(ctd.calibracion_cantidad) + COUNT(ctd.despacho_cantidad) as ventas,SUM(ctd.total_cantidad) + SUM(ctd.calibracion_cantidad) + SUM(ctd.despacho_cantidad) as cantidad,SUM(ctd.total_soles) + SUM(ctd.calibracion_soles) + SUM(ctd.despacho_soles) as total
+            select ctd.codigo,ctd.producto,
+            SUM(ctd.total_cantidad) + SUM(ctd.calibracion_cantidad) + SUM(ctd.despacho_cantidad) as cantidad,
+            SUM(ctd.total_soles) + SUM(ctd.calibracion_soles) + SUM(ctd.despacho_soles) as total
             from Cierreturnos t 
             inner join Cierredias d on t.CierrediaId = d.id 
             inner join Cierreturnosdetalle ctd on t.id = ctd.CierreturnoId 
             where CAST(d.fecha AS DATE) = '${fecha}' ${includeProducts?"":"and ctd.medida = 'GLL' "}
             group by ctd.codigo, ctd.producto
         `;
-    console.log("Query de reporte de cierre por día:", query);
     const cierres = await executeQuery<IReporteCierrePorDia[]>(
         process.env.DB_DATABASE_AUXILIAR||"", query
     );    
@@ -29,6 +30,20 @@ export async function obtieneReporteDeclaracionMensual(fecha: string): Promise<I
             where YEAR(fecha_emision) = '${split_fecha[0]}' and MONTH(fecha_emision) = '${split_fecha[1]}' and tipo_comprobante in ('01','03','07') and c.errors = ' '
             order by c.id desc;
         `
+    );    
+    return cierres;
+}
+
+export async function obtieneReporteCierrePorDia(fecha: string): Promise<IReporteCierreTurno[]> { 
+    const query =     `
+        select t.turno, t.fecha, u.nombre,t.efectivo, t.tarjeta, t.yape, t.total
+        from Cierreturnos t 
+        inner join Cierredias di on di.id=t.CierrediaId 
+        inner join Usuarios u on t.UsuarioId = u.id 
+        where CAST(di.fecha AS DATE) = '${fecha}' order by t.fecha asc
+        `;
+    const cierres = await executeQuery<IReporteCierreTurno[]>(
+        process.env.DB_DATABASE_AUXILIAR||"", query
     );    
     return cierres;
 }

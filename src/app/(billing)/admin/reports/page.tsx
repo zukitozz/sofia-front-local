@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { ReporteDiario } from "./ReporteDiario";
 import { ReporteDeclaracionMensual } from "./ReporteDeclaracionMensual";
+import { ReporteCierreTurnos } from "./ReporteCierreTurnos";
 
 interface IReporte {
-    tipo: 'diario'|'turnos'|'declaracion_mensual'|'cierres'|'turnosexcel'|'comprobantes'
+    tipo: 'diario'|'turnos'|'declaracion_mensual'|'cierres'|'cierre_turnos'|'comprobantes'
 }
 
 export default function Reports() {
@@ -21,7 +22,11 @@ export default function Reports() {
             case 'declaracion_mensual':
                 return <>
                     <ReporteDeclaracionMensual/>
-                </>              
+                </>
+            case 'cierre_turnos':
+                return <>
+                    <ReporteCierreTurnos/>
+                </>                
         }
     }
     return (
@@ -36,7 +41,10 @@ export default function Reports() {
                         </Link>
                         <Link href={  `#` } className="text-blue-800 font-bold mt-2 inline-block" onClick={() => setTipoReporte({tipo: 'declaracion_mensual'})}>
                             Reporte declaración mensual
-                        </Link>                        
+                        </Link>
+                        <Link href={  `#` } className="text-blue-800 font-bold mt-2 inline-block" onClick={() => setTipoReporte({tipo: 'cierre_turnos'})}>
+                            Reporte cierre de turnos
+                        </Link>
                     </div>
                     {
                         renderSwitch(tipoReporte)

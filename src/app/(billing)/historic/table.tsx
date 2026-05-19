@@ -14,7 +14,7 @@ interface TableProps {
   perPage: number;
 }
 
-const fetcher = (page: number, perPage: number, fecha: string) => getHistoricos(page, perPage, fecha);
+const fetcher = (page: number, perPage: number, fecha: string, numeracion: string) => getHistoricos(page, perPage, fecha, numeracion);
 
 const getVisiblePages = (current: number, totalPages: number) => {
     const range = 2; // Cuántas páginas mostrar a los lados de la actual
@@ -36,15 +36,21 @@ const getVisiblePages = (current: number, totalPages: number) => {
 };
 
 export const HistoricosTable = ({ page, perPage }: TableProps) => {
-    const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date()));    
+    const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date()));   
+    const [numeracion, setNumeracion] = useState<string>(''); 
     const [currentPage, setCurrentPage] = useState(1);
     const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setCurrentPage(1);
         setDate(e.target.value);
     };    
-    const { data, error, isValidating, isLoading, mutate } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, (url: string) => fetcher(currentPage, 10, date));
+    const handleNumeracionChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setCurrentPage(1); // Reseteamos a la página 1 ante un nuevo filtro
+        setNumeracion(e.target.value);
+    };    
+    const { data, error, isValidating, isLoading, mutate } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, (url: string) => fetcher(currentPage, 10, date, numeracion));
     useEffect(() => {
         mutate()
-    }, [currentPage, date])    
+    }, [currentPage, date, numeracion])    
     const paginate = (pageNumber: SetStateAction<number>) => { setCurrentPage(pageNumber) };
     if(!data || isLoading || isValidating || error || !Array.isArray(data.historicos) || !Array.isArray(data.pageNumbers)){
         return (<div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div>);
@@ -59,7 +65,17 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                 id="start"
                 name="trip-start"
                 value={date} 
-                onChange={handleDateChange} />                        
+                onChange={handleDateChange} />
+
+            <input
+                    type="text"
+                    id="numeracion"
+                    name="numeracion"
+                    placeholder="Buscar por N° Comprobante..."
+                    className="border px-3 py-2 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-[240px]"
+                    value={numeracion}
+                    onChange={handleNumeracionChange}
+                />                
         </div>
         <div className="mb-10 w-full overflow-x-auto">
             <table className="min-w-full">
@@ -178,6 +194,16 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                                 </Link>
                             )
                         }
+                        {/* {
+                            item.url && item.url != 'null' && (
+                                <Link 
+                                    href={ `/historic/${ item.id }` }
+                                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                                >
+                                    N.Credito
+                                </Link>
+                            )
+                        } */}
                     </td>                                        
                     <td className="text-sm text-gray-900 font-light px-6 ">
                         <PrintButton id={item.id||0} />

@@ -6,7 +6,7 @@ export interface IComprobanteAdmin {
     numeracion: string;
     numeracion_comprobante: string;
     fecha_emision: string;
-    moneda: string;
+    tipo_moneda: string;
     tipo_operacion: string;
     tipo_nota: string|null;
     tipo_documento_afectado: string|null;

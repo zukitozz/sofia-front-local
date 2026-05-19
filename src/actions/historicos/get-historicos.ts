@@ -7,9 +7,15 @@ interface TableResponseProductsProps {
   pageNumbers: number[];
 }
 
-export async function getHistoricos(page: number, perPage: number, fecha: string): Promise<TableResponseProductsProps> {
+export async function getHistoricos(page: number, perPage: number, fecha: string, numeracionComprobante?: string): Promise<TableResponseProductsProps> {
     const start = (page * perPage) - (perPage - 1);
     const end = (page * perPage);
+
+    let filtroNumeracion = "";
+    if (numeracionComprobante && numeracionComprobante.trim() !== "") {
+        filtroNumeracion = ` AND c.numeracion_comprobante = '${numeracionComprobante.trim()}'`;
+    }
+
     try {
         const query = `select * from (SELECT 
                         c.id, CASE c.tipo_comprobante WHEN '01' THEN 'FACTURA ELECTRÓNICA' WHEN '03' THEN 'BOLETA ELECTRÓNICA' WHEN '07' THEN 'NOTA DE CREDITO' WHEN '08' THEN 'NOTA DE DEBITO' WHEN '50' THEN 'NOTA DE DESPACHO' WHEN '51' THEN 'CALIBRACION' ELSE 'INTERNO' END as tipo_comprobante,
@@ -18,7 +24,7 @@ export async function getHistoricos(page: number, perPage: number, fecha: string
                         FROM Comprobantes c
                         LEFT JOIN Cierreturnos t on c.CierreturnoId = t.id 
                         INNER JOIN Usuarios u on c.UsuarioId = u.id 
-                        WHERE c.fecha_emision = '${fecha}' 
+                        WHERE c.fecha_emision = '${fecha}' ${filtroNumeracion}
                         ) as Result WHERE RowNum BETWEEN ${start} AND ${end} order by fecha_hora desc;`
         
         const historicos = await executeQuery<IComprobanteHistorico[]>(
@@ -65,6 +71,42 @@ export async function getHistoricos(page: number, perPage: number, fecha: string
         }
     } catch (error) {
         console.error("Error fetching getHistoricos:");
+        console.error(JSON.stringify(error));
+        throw error;
+    }
+}
+
+export async function getHistoricoById(id: number): Promise<IComprobanteHistorico> {
+    try {
+        const data = await executeQuery<IComprobanteHistorico[]>(
+            process.env.DB_DATABASE_AUXILIAR||"", 
+            `SELECT * FROM Comprobantes WHERE id = ${id}`
+        );
+
+        const historico: IComprobanteHistorico = data[0];
+
+        const detalle = await executeQuery<IComprobanteAdminItem[]>(
+            process.env.DB_DATABASE_AUXILIAR||"", 
+            `
+                select id,cantidad,valor_unitario,precio_unitario,igv,descripcion,codigo_producto,placa,medida,total_unitario,dec_cantidad,dec_sub_total,dec_total,dec_igv,valor_venta,precio_venta,valor,precio,igv_venta,codigo,cantidad_venta 
+                from Items 
+                where ComprobanteId = ${historico.id};
+            `
+        );
+        historico.items = detalle;
+        const receptor = await executeQuery<IReceptor[]>(
+            process.env.DB_DATABASE_AUXILIAR||"", 
+            `
+                select id,numero_documento,tipo_documento,razon_social,direccion,correo,placa 
+                from Receptores
+                where id = ${historico.ReceptorId};
+            `
+        );
+        historico.Receptor = receptor[0];
+
+        return historico;
+    } catch (error) {
+        console.error("Error fetching getHistoricoById:");
         console.error(JSON.stringify(error));
         throw error;
     }

@@ -1,7 +1,6 @@
 export interface IReporteCierrePorDia {
     codigo: string;
     producto: string;
-    ventas: number;
     cantidad: number;
     total: number;
 }
@@ -23,4 +22,14 @@ export interface IReporteDeclaracionMensual {
     pistola: string;
     tiempo_abastecimiento: string;
     ruc: string;
+}
+
+export interface IReporteCierreTurno {
+    turno: string;
+    fecha: string;
+    nombre: string;
+    efectivo: number;
+    yape: number;
+    tarjeta: number;
+    total: number;
 }
