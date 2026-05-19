@@ -7,7 +7,7 @@ import { IoDownloadOutline, IoCalendarOutline } from "react-icons/io5";
 
 import { obtieneReporteCierrePorDia } from '@/actions';
 import { currencyFormat, toLocaleOnlyDate, toLocaleShow } from "@/utils";
-import { IReporteCierrePorDia, IReporteCierreTurno } from '@/interfaces';
+import { IReporteCierreTurno } from '@/interfaces';
 
 const fetcher = (fecha: string) => 
     obtieneReporteCierrePorDia(fecha);
@@ -15,7 +15,7 @@ const fetcher = (fecha: string) =>
 export const ReporteCierreTurnos = () => {
     const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date()));
 
-    const { data, error, isValidating, isLoading, mutate } = useSWR(
+    const { data, isValidating, isLoading, mutate } = useSWR(
         `${process.env.NEXT_PUBLIC_URL}/api-cierres`, 
         () => fetcher(date)
     );
@@ -97,7 +97,7 @@ export const ReporteCierreTurnos = () => {
                             <tr key={item.nombre} className="hover:bg-blue-50/50 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.turno}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{toLocaleShow(item.fecha)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nombre}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nombre?.slice(0, 15)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{currencyFormat(item.total)}</td>
                             </tr>
                         ))}
