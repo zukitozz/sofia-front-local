@@ -6,6 +6,7 @@ import { IUser } from '@/interfaces';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IoArrowBack } from "react-icons/io5";
+import { notify } from "@/utils";
 
 interface Props {
   usuario: IUser
@@ -14,6 +15,7 @@ interface Props {
 export const UsuariosForm = ({ usuario }: Props) => {
     const router = useRouter();
     const [formValues, setFormValues] = useState<IUser>(usuario);
+    const [isLoading, setIsLoading] = useState(false);
     const newProduct = usuario.id==0;
     const handleChangeNombre = (event: React.ChangeEvent<HTMLInputElement>) => {
         setFormValues({ ...formValues, nombre: event.target.value });
@@ -27,8 +29,17 @@ export const UsuariosForm = ({ usuario }: Props) => {
     const handlerProcessBilling = async (event: React.FormEvent<HTMLFormElement>) => {
         //TODO: Validar
         event.preventDefault();
-        await saveUsuario(formValues);
-        router.push('/admin/usuarios')
+        setIsLoading(true);
+        const { status, message } = await saveUsuario(formValues);
+        if (!status) {
+            notify({ message: message || "Error al guardar", type: "error" });
+            setIsLoading(false);
+            return;
+        }
+        notify({ message: newProduct ? "Usuario registrado" : "Usuario actualizado" });
+        router.push('/admin/usuarios');
+        router.refresh();        
+        
     }
 
     return (

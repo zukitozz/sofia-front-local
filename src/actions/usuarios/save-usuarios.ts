@@ -3,18 +3,33 @@ import { ICambioPasswordResponse, IUser } from '@/interfaces';
 import { executeQuery } from '@/utils/db';
 import { toLocaleStorage } from '@/utils/formats';
 
-export async function saveUsuario({ id, nombre, usuario, correo }: IUser): Promise<IUser[]> {
+interface IUsuarioStoreResponse {
+    producto: IUser|null;
+    message: string;
+    status: boolean;
+}
+
+export async function saveUsuario({ id, nombre, usuario, correo, rol }: IUser): Promise<IUsuarioStoreResponse> {
+    let message = `Ocurrió un error al registrar usuario`;
     try {
-        const query = id? `UPDATE Usuarios set nombre = '${nombre}', usuario = '${usuario}', correo = '${correo}' where id = ${id}` : `INSERT into Usuarios (nombre, usuario, correo) values ('${nombre}', '${usuario}', '${correo}')`
+        const query = id? `UPDATE Usuarios set nombre = '${nombre}', usuario = '${usuario}', correo = '${correo}' where id = ${id}` : `INSERT into Usuarios (nombre, usuario, correo, password, rol, EmisorId) values ('${nombre}', '${usuario}', '${correo}', 'MTIzNA==', '${rol}', 1)`;
+        console.log("Executing query:", query);
         const user = await executeQuery<IUser[]>(
             process.env.DB_DATABASE_AUXILIAR||"", query
             
         );
-     return user as IUser[];
+         message = `Usuario almacenado correctamente`;
+        return {
+            message,
+            status: true,
+            producto: null
+        }   
     } catch (error) {
-        console.error("Error fetching getProductos:");
-        console.error(JSON.stringify(error));
-        throw error;
+        return {
+            message: `${message} | ${JSON.stringify(error)}`,
+            status: false,
+            producto: null
+        }   
     }
 }
 
