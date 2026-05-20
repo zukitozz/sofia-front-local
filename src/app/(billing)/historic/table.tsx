@@ -194,8 +194,8 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                                 </Link>
                             )
                         }
-                        {/* {
-                            item.url && item.url != 'null' && (
+                        {
+                            item.url && item.url != 'null' && !item.numeracion_documento_afectado && (
                                 <Link 
                                     href={ `/historic/${ item.id }` }
                                     className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
@@ -203,7 +203,7 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                                     N.Credito
                                 </Link>
                             )
-                        } */}
+                        }
                     </td>                                        
                     <td className="text-sm text-gray-900 font-light px-6 ">
                         <PrintButton id={item.id||0} />
@@ -245,8 +245,6 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                                         )
                                     ))
                                 }
-                                
-
                                 {/* Botón Siguiente */}
                                 <button
                                     disabled={currentPage === totalPages}

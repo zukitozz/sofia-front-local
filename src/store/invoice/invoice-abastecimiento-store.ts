@@ -2,7 +2,7 @@ import { IAbastecimiento, IFuelProduct, IOrderItem, IProduct } from "@/interface
 import { Constants } from "@/utils";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { getDescuentosByNumeroDocumento } from '@/actions';
+import { getDescuentosByNumeroDocumento, getProductoPorCodigo } from '@/actions';
 
 interface State {
     items: IOrderItem[];
@@ -35,9 +35,8 @@ export const useOrderAbastecimientoStore = create<State>()(
                 const totalIgv = Math.round((total - subTotal)*100)/100;
                 return { subTotal, totalIgv, total };
             },
-            addAbastecimientoToOrder: ({ idAbastecimiento, valorTotal, volTotal, codigoCombustible, precioUnitario ,pistola, tiempo, fechaHora, totInicio, totFinal }: IAbastecimiento) => {
-                const fuelConfigString = process.env.NEXT_PUBLIC_FUEL_CONFIG;
-                const FUEL_CONFIG: IFuelProduct[] = fuelConfigString ? JSON.parse(fuelConfigString) : [];
+            addAbastecimientoToOrder: async ({ idAbastecimiento, valorTotal, volTotal, codigoCombustible, precioUnitario ,pistola, tiempo, fechaHora, totInicio, totFinal }: IAbastecimiento) => {
+                const producto = await getProductoPorCodigo(codigoCombustible.toString());
                 const taxRate = Number.parseFloat(process.env.NEXT_PUBLIC_TAX || "0.18");
                 const orderItem: IOrderItem = {
                     cantidad: volTotal,
@@ -46,8 +45,8 @@ export const useOrderAbastecimientoStore = create<State>()(
                     igv: Math.round((valorTotal - valorTotal/(1 + taxRate))*100)/100,
                     valor_unitario: Math.round((precioUnitario/(1 + taxRate))*10000000000)/10000000000,
                     precio_unitario: precioUnitario,
-                    descripcion: FUEL_CONFIG.find(fuel => fuel.id === codigoCombustible)?.desc || "Combustible",
-                    codigo_producto: FUEL_CONFIG.find(fuel => fuel.id === codigoCombustible)?.id_auxiliar || "",
+                    descripcion: producto?.descripcion || "Combustible",
+                    codigo_producto: codigoCombustible.toString() || "",
                     medida: Constants.MEDIDA.GALON,
                     id_abastecimiento: idAbastecimiento ?? null,
                     pistola: pistola,

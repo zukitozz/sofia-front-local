@@ -108,10 +108,10 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
         const items:IComprobanteAdminItem[] = [];
         for (const order of orders) {
             const item:IComprobanteAdminItem = {
-                cantidad_string: order.cantidad.toString(),
-                precio_unitario_string: order.precio_unitario.toString(),
-                valor_unitario_string: order.valor_unitario.toString(),
-                igv_string: order.igv.toString(),
+                cantidad: order.cantidad.toString(),
+                precio_unitario: order.precio_unitario.toString(),
+                valor_unitario: order.valor_unitario.toString(),
+                igv: order.igv.toString(),
                 descripcion: order.descripcion,
                 codigo_producto: order.codigo_producto,
                 medida: order.medida,

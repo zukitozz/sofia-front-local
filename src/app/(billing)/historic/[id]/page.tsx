@@ -1,9 +1,8 @@
-"use client";
-import useSWR from "swr";
 import { Title } from "@/components";
 import { getHistoricoById } from "@/actions/historicos/get-historicos";
 import { BillingEditForm } from "./ui/BillingEditForm";
 import { BillingEditSummary } from "./ui/BillingEditSummary";
+import { notFound } from "next/navigation";
 
 interface Props {
   params: {
@@ -13,13 +12,13 @@ interface Props {
 
 const fetcher = (id: number) => getHistoricoById(id);
 
-export default function InvoiceByIdPage({ params }: Props) {
+export default async function InvoiceByIdPage({ params }: Readonly<Props>) {
     const { id } = params;
-    const { data, error, isValidating, isLoading, mutate } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, (url: string) => fetcher(id));
+    const data = await getHistoricoById(id);
 
-    if(!data || isLoading || isValidating || error){
-        return (<div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div>);
-    }     
+    if (!data) {
+        notFound(); // Redirige automáticamente a una página 404 si no hay datos
+    }
 
     return (
       <div className="flex justify-center items-center mb-72 px-10 sm:px-0">

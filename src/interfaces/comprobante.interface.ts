@@ -54,10 +54,10 @@ export interface IComprobanteAdmin {
     items: IComprobanteAdminItem[];
 }
 export interface IComprobanteAdminItem {
-    cantidad_string: string;
-    precio_unitario_string: string;
-    valor_unitario_string: string;
-    igv_string: string;
+    cantidad: string;
+    precio_unitario: string;
+    valor_unitario: string;
+    igv: string;
     descripcion: string;
     codigo_producto: string;
     medida: string;

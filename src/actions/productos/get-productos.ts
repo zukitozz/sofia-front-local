@@ -53,6 +53,20 @@ export async function getProducto(id: number): Promise<IProduct> {
     }
 }
 
+export async function getProductoPorCodigo(codigo: string): Promise<IProduct> {
+    try {
+     const productos = await executeQuery<IProduct[]>(
+        process.env.DB_DATABASE_AUXILIAR||"", 
+        `SELECT id,nombre,descripcion,imagenes,stock,codigo,medida,precio,valor,estado,color,img FROM Productos WHERE codigo = '${codigo}'`
+    );
+     return productos[0] as IProduct;
+    } catch (error) {
+        console.error("Error fetching getProducto:");
+        console.error(JSON.stringify(error));
+        throw error;
+    }
+}
+
 export async function getProductosLista(): Promise<IProduct[]> {
     try {
      const productos = await executeQuery<IProduct[]>(

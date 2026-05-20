@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { saveBilling } from "@/actions";
+import { saveBilling, saveCheckNc } from "@/actions";
 import { Constants, notify, toLocaleStorage } from "@/utils";
 import { IBillingForm, IComprobanteAdmin } from "@/interfaces";
 import { NumeroDocumento, Placa, RazonSocial, Direccion, TipoPago } from "@/app/(billing)/invoice/[id]/ui/form-values";
@@ -93,29 +93,38 @@ export const BillingEditForm = ({ billing }: Props) => {
             await procesarComprobante();
         } finally {
             setIsProcessing(false);
-            router.push('/historic')
+            //router.push('/historic')
         }
     }
 
     const procesarComprobante = async () => {
         billing.tipo_comprobante = Constants.TIPO_COMPROBANTE.NOTA_CREDITO;
-        billing.fecha_emision = toLocaleStorage(new Date());
-        billing.tipo_documento_afectado = tipoComprobante;
         billing.numeracion_documento_afectado = billing.numeracion_comprobante || "";
+        billing.fecha_documento_afectado = toLocaleStorage(billing.fecha_emision || "");
+        billing.tipo_documento_afectado = tipoComprobante;
+
+        billing.fecha_emision = toLocaleStorage(new Date());
+        billing.fecha_hora = toLocaleStorage(new Date());
+        billing.fecha_abastecimiento = '';
         billing.numeracion_comprobante = "";
         billing.UsuarioId = UsuarioId;
         billing.IslaId = IslaId;
+        billing.impresion = 0;
+        billing.enviado = 0;
         console.log("Comprobante a guardar:", billing);
         const { status, message, bill } = await saveBilling(billing);
 
         console.log("Respuesta de saveBilling:", { status, message, bill });
-
-        // if(status && bill){
-        //     notify({message, type:'success'})
-        // }else {
-        //     notify({message, type:'error'})
-        // }
-        // router.replace('/historic');
+        
+        
+        if(status && bill){
+            console.log("Guardando verificación para NC:", { documento_principal: billing.numeracion_documento_afectado, documento_afectado: bill.numeracion_comprobante });
+            const reponse_nc = await saveCheckNc(billing.numeracion_documento_afectado, bill.numeracion_comprobante);    
+            console.log("Respuesta de saveCheckNc:", reponse_nc);
+            notify({message, type:'success'})
+        }else {
+            notify({message, type:'error'})
+        }
     }
     
     return (
