@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { saveBilling } from "@/actions";
+import { saveBilling, validatePrevBilling } from "@/actions";
 import { useOrderAbastecimientoStore } from "@/store";
 import { Constants, initialBillingForm, notify } from "@/utils";
 import { Direccion, NumeroDocumento, Placa, RazonSocial, TipoPago } from "./form-values";
@@ -88,13 +88,18 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
         event.preventDefault();
         if (!validateForm() || isProcessing) return;
         setIsProcessing(true);
-        try {
+        try { 
             await procesarComprobante();
         } finally {
+            await delay(2000);
             setIsProcessing(false);
             router.push('/')
         }
     }
+
+    const delay = (ms: number): Promise<void> => {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    };
 
     const procesarComprobante = async () => {
         const receptor: IReceptor = {
@@ -138,6 +143,12 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
             receptor, tipoComprobante, subTotal, totalIgv, total, tarjeta, efectivo, yape, ruc, UsuarioId, items, placa, 
             fecha_abastecimiento, tiempo_abastecimiento, IslaId, id_abastecimiento, pistola, codigo_producto, cantidad
         )
+
+        const validatePrev = await validatePrevBilling(id_abastecimiento);
+        if(validatePrev.status){
+            notify({message: validatePrev.message, type:'error'})
+            return;
+        }
         
         const { status, message, bill } = await saveBilling(comprobante.toPlainObject());
 
@@ -147,7 +158,6 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
             notify({message, type:'error'})
         }
         removeAllProducts();
-        router.replace('/');
     }
     
     return (
@@ -165,7 +175,7 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
                     <Direccion formValues={formValues} setFormValues={setFormValues} />
                     <TipoPago total={total} formValues={formValues} setFormValues={setFormValues} />
                     <div className="col-span-2">
-                        <button className={`${false ? "btn-disabled" : "btn-primary"} px-5 py-2 mt-3 w-full`} disabled={false}
+                        <button className={`${false ? "btn-disabled" : "btn-primary"} px-5 py-2 mt-3 w-full`} disabled={isProcessing}
                         type="submit">
                             {isProcessing ? 'Procesando...' : 'Emitir comprobante'}
                         </button>                        

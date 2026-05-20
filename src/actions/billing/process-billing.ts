@@ -53,3 +53,44 @@ export async function getBillingToProcess(): Promise<IComprobanteAdmin|null> {
     }    
 
 }
+
+interface IGenericResponse {
+    message: string;
+    status: boolean;
+}
+
+export async function validatePrevBilling(id_abastecimiento: number|null|''): Promise<IGenericResponse> {
+
+    if(!id_abastecimiento || id_abastecimiento === 1){
+        return {
+            message: "No existe abastecimiento previo",
+            status: false
+        }
+    }
+    try {
+        const comprobante = await executeQuery<IComprobanteAdmin[]>(
+            process.env.DB_DATABASE_AUXILIAR||"", 
+            `SELECT id 
+            FROM 
+                Comprobantes 
+            WHERE tipo_comprobante in ('01','03') and id_abastecimiento = ${id_abastecimiento}
+            `
+        );
+        if (comprobante.length === 0) {
+            return {
+                message: "No existe abastecimiento previo",
+                status: false
+            }
+        }
+        return {
+            message: "Abastecimiento previo validado",
+            status: true
+        }
+    } catch (error) {
+        return {
+            message: `Error al validar comprobante previo | ${JSON.stringify(error)}`,
+            status: true
+        }        
+    }
+}
+
