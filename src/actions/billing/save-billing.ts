@@ -1,6 +1,7 @@
 'use server';
 import { IComprobanteAdmin } from '@/interfaces';
 import { executeQuery, saveBillingTransaction } from '@/utils/db';
+import { Session } from "next-auth";
 
 interface IComprobanteStoreResponse {
     bill: IComprobanteAdmin|null;
@@ -33,10 +34,11 @@ interface IGenericResponse {
     status: boolean;
 }
 
-export async function reprintBilling(id: number): Promise<IGenericResponse> {
+export async function reprintBilling(session: Session|null, id: number): Promise<IGenericResponse> {
     let message = `Ocurrió un error al solicitar reimpresión del comprobante`
+    const islaId = session?.user?.islaId || 0;
     try {
-        const query = `UPDATE Comprobantes set impresion = 0 where id = ${id}`;
+        const query = `UPDATE Comprobantes set impresion = 0, IslaId = ${islaId} where id = ${id}`;
         await executeQuery(
             process.env.DB_DATABASE_AUXILIAR||"", query
             

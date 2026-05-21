@@ -3,6 +3,7 @@ import useSWR from 'swr';
 import { getHistoricos } from '@/actions'
 import { IComprobanteHistorico } from '@/interfaces';
 import Link from 'next/link';
+import { useSession } from "next-auth/react";
 
 import { ChangeEvent, SetStateAction, useEffect, useState } from 'react';
 import { toLocaleOnlyDate, toLocaleShow } from '@/utils';
@@ -36,6 +37,7 @@ const getVisiblePages = (current: number, totalPages: number) => {
 };
 
 export const HistoricosTable = ({ page, perPage }: TableProps) => {
+    const { data: session } = useSession();
     const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date()));   
     const [numeracion, setNumeracion] = useState<string>(''); 
     const [currentPage, setCurrentPage] = useState(1);
@@ -206,7 +208,7 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                         }
                     </td>                                        
                     <td className="text-sm text-gray-900 font-light px-6 ">
-                        <PrintButton id={item.id||0} />
+                        <PrintButton id={item.id || 0} session={session} />
                     </td>                    
                 </tr>
                 ))}

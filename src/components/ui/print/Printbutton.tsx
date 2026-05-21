@@ -2,16 +2,18 @@ import React from 'react'
 import { reprintBilling } from '@/actions/billing/save-billing';
 import { notify } from '@/utils';
 import { IoPrintOutline } from 'react-icons/io5';
+import { Session } from "next-auth";
 
 interface Props {
   id: number;
+  session: Session|null;
 }
 
-const PrintButton = ({ id }: Props) => {
+const PrintButton = ({ id, session }: Props) => {
   const handlerPrint = async (e: React.MouseEvent) => {
     e.preventDefault();
     
-    const { status, message } = await reprintBilling(id);
+    const { status, message } = await reprintBilling(session, id);
     const type = status ? 'success' : 'error';
     notify({ message, type });
   };
