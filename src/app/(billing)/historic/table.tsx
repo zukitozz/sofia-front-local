@@ -232,7 +232,7 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                                     visiblePages.map((page, index) => (
                                         typeof page === 'number' ? (
                                             <button
-                                                key={index}
+                                                key={page}
                                                 onClick={() => paginate(page)}
                                                 className={`px-3 py-1 rounded border transition-colors ${
                                                     currentPage === page 

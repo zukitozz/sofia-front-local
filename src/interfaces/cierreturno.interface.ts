@@ -52,6 +52,8 @@ export interface ICierreTurno {
     UsuarioId: number;
     detalle?: ICierreTurnoDetalle[];
     usuario?: IUser;
+    depositos?: IDepositos[];
+    gastos?: IGastos[];
 }
 
 export interface ICierreTurnoResponse {

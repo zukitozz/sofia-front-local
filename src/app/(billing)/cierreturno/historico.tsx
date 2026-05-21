@@ -3,8 +3,9 @@ import useSWR from 'swr';
 
 import { obtieneHistoricoCierres } from '@/actions/cierreturno'
 import { useSession } from "next-auth/react";
-import { ICierreTurno, ICierreTurnoDetalle } from '@/interfaces/cierreturno.interface';
+import { ICierreTurno } from '@/interfaces/cierreturno.interface';
 import { currencyFormat, toLocaleShow } from '@/utils/formats';
+import { ResumenTable } from '../../../components/cierres/ResumeTable';
 
 const fetcher = (usuarioId: string) => obtieneHistoricoCierres(usuarioId);
 
@@ -16,92 +17,104 @@ export const Historico = () => {
     if(!data || isLoading || isValidating || error || !Array.isArray(data)){
         return (<div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div>);
     }
-    
+
     return (
         <div className="bg-white rounded-xl shadow-xl p-7 col-span-3">
-        <h2 className="text-lg font-semibold mb-2">Histórico (Últimos 2)</h2>
+            <h2 className="text-xl font-bold mb-4 border-b pb-2 flex items-center gap-2 text-gray-800">
+                <span>🕒</span> Histórico (Últimos 2)
+            </h2>
                 {
-                    data.map((cierre : ICierreTurno) => (
-                        <div key={ cierre.id } className="bg-white rounded-xl shadow-xl p-7 col-span-3 mb-3">
-                            <div className="grid grid-cols-2 gap-2">
-                                <div><b>TURNO:</b> { cierre.turno } </div>
-                                <div><b>ISLA:</b> { cierre.isla } </div>
-                                <div className="col-span-2"><b>FECHA:</b> { toLocaleShow(cierre.fecha) } </div>                                
+                    data.map((cierre : ICierreTurno) => {
+                        // 1. Calcular dinámicamente los totales para cada cierre del ciclo
+                        const totalSerafin = cierre.detalle
+                            ?.filter(p => p.medida === "GLL")
+                            .reduce((acc, item) => acc + (item.despacho_soles + item.calibracion_soles), 0) || 0;
+
+                        const totalVentaGalones = cierre.detalle
+                            ?.filter(p => p.medida === "GLL")
+                            .reduce((acc, item) => acc + item.total_soles, 0) || 0;
+
+                        const totalPagos = (cierre.efectivo || 0) + (cierre.tarjeta || 0) + (cierre.yape || 0);
+
+                        return (
+                            <div key={ cierre.id } className="bg-gray-50/60 rounded-xl border border-l-4 border-gray-200 border-l-slate-400 p-3 col-span-3 mb-4 last:mb-0">
+                                <div className="flex flex-col gap-1 mb-3 pb-2 border-b border-gray-200">
+                                    <div className="flex gap-4">
+                                        <span className="text-gray-500">
+                                            <strong className="text-gray-400 font-medium uppercase tracking-wider text-[10px] mr-1">TURNO:</strong> 
+                                            <span className="text-gray-800 font-bold">{cierre.turno}</span>
+                                        </span>
+                                        <span className="text-gray-300">|</span>
+                                        <span className="text-gray-500">
+                                            <strong className="text-gray-400 font-medium uppercase tracking-wider text-[10px] mr-1">ISLA:</strong> 
+                                            <span className="text-gray-800 font-bold">{cierre.isla}</span>
+                                        </span>
+                                    </div>
+
+                                    <div className="text-gray-500 flex items-center gap-1">
+                                        <span className="text-gray-400 font-medium uppercase tracking-wider text-[10px]">FECHA:</span>
+                                        <span className="font-medium text-gray-600 text-xs">{toLocaleShow(cierre.fecha)}</span>
+                                    </div>
+                                </div>
+                                
+                                {
+                                    !cierre.detalle || cierre.detalle.length === 0 ? (
+                                        <div className="p-4 text-gray-400 text-xs font-semibold italic">No hay detalles de ventas para este cierre</div>
+                                    ) : null
+                                }
+
+                                {/* 2. Renderizado con footerValue dinámico */}
+                                {
+                                    cierre.detalle && cierre.detalle.filter(p => p.medida === "GLL" && (p.calibracion_cantidad > 0 || p.despacho_cantidad > 0)).length > 0 && (
+                                        <ResumenTable 
+                                            title="NOTAS DE DESPACHO / SERAFIN" 
+                                            headers={['PRODUCTO', 'GAL', 'IMPORTE']}
+                                            footerLabel="SUB TOTAL"
+                                            footerValue={totalSerafin}
+                                        >
+                                            {cierre.detalle.filter(p => p.medida === "GLL").map(item => (
+                                                <tr key={item.producto}>
+                                                    <td className='text-left'>{item.producto} (Serafin/Desp)</td>
+                                                    <td className='text-right'>{(item.despacho_cantidad + item.calibracion_cantidad).toFixed(3)}</td>
+                                                    <td className='text-right'>{currencyFormat(item.despacho_soles + item.calibracion_soles)}</td>
+                                                </tr>
+                                            ))}
+                                        </ResumenTable>
+                                    )
+                                }
+                                {
+                                    cierre.detalle && cierre.detalle.filter((p) => p.total_cantidad > 0).length > 0 && (
+                                        <ResumenTable 
+                                            title="VENTA PRODUCTOS/GALONES" 
+                                            headers={['PRODUCTO', 'CANT/GAL', 'IMPORTE']}
+                                            footerLabel="SUB TOTAL"
+                                            footerValue={totalVentaGalones}
+                                        >
+                                            {cierre.detalle.filter(p => p.medida === "GLL").map(item => (
+                                                <tr key={item.producto}>
+                                                    <td className='text-left'>{item.producto}</td>
+                                                    <td className='text-right'>{item.total_cantidad.toFixed(3)}</td>
+                                                    <td className='text-right'>{currencyFormat(item.total_soles)}</td>
+                                                </tr>
+                                            ))}
+                                        </ResumenTable>                                     
+                                    )
+                                }
+                                {
+                                    <ResumenTable 
+                                        title="TIPO DE PAGO" 
+                                        headers={['MEDIO', 'MONTO']}
+                                        footerLabel="TOTAL PAGOS"
+                                        footerValue={totalPagos}
+                                    >
+                                        <tr><td className="text-left">EFECTIVO</td><td className="text-right">{currencyFormat(cierre.efectivo)}</td></tr>
+                                        <tr><td className="text-left">TARJETA</td><td className="text-right">{currencyFormat(cierre.tarjeta)}</td></tr>
+                                        <tr><td className="text-left">YAPE</td><td className="text-right">{currencyFormat(cierre.yape)}</td></tr>
+                                    </ResumenTable>                                 
+                                }                            
                             </div>
-                            {
-                                (cierre.detalle ?? []).filter((producto) => producto.medida == "GLL" && producto.calibracion_cantidad > 0).length > 0 && (
-                                    <>
-                                        <hr/>
-                                        <h3 className="mt-5 mb-2"><b>NOTAS DE DESPACHO</b></h3>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <div>SERAFIN</div>
-                                            <div>GAL</div>
-                                            <div>IMPORTE</div>                            
-                                        </div>
-                                        {
-                                            cierre.detalle?.filter((producto) => producto.medida == "GLL" && producto.despacho_cantidad > 0).map((item: ICierreTurnoDetalle) => (
-                                                <div key={item.producto}>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        <div>{ item.producto}</div>
-                                                        <div>{ item.despacho_cantidad }</div>
-                                                        <div>{ currencyFormat(item.despacho_soles) }</div>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        }
-                                    </>
-                                )
-                            }
-                            {
-                                (cierre.detalle ?? []).filter((producto) => producto.medida == "GLL" && producto.total_cantidad > 0).length > 0 && (
-                                    <>
-                                        <hr/>
-                                        <h3 className="mt-5 mb-2"><b>VENTA GALONES/CANTIDAD</b></h3>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <div>PRODUCTO</div>
-                                            <div>GAL</div>
-                                            <div>IMPORTE</div>                            
-                                        </div>
-                                        {
-                                            cierre.detalle?.filter((producto) => producto.medida == "GLL" && producto.total_cantidad > 0).map((item: ICierreTurnoDetalle) => (
-                                                <div key={item.producto}>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        <div>{ item.producto}</div>
-                                                        <div>{ item.total_cantidad }</div>
-                                                        <div>{ currencyFormat(item.total_soles) }</div>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        }
-                                    </>
-                                )
-                            }
-                            {
-                                (cierre.detalle ?? []).filter((producto) => producto.medida != "GLL" && producto.total_cantidad > 0).length > 0 && (
-                                    <>
-                                        <hr/>
-                                        <h3 className="mt-5 mb-2"><b>VENTA POR PRODUCTO</b></h3>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <div>PRODUCTO</div>
-                                            <div>CANT</div>
-                                            <div>IMPORTE</div>                            
-                                        </div>
-                                        {
-                                            cierre.detalle?.filter((producto) => producto.medida != "GLL"&& producto.total_cantidad > 0).map((item: ICierreTurnoDetalle) => (
-                                                <div key={item.producto}>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        <div>{ item.producto}</div>
-                                                        <div>{ item.total_cantidad }</div>
-                                                        <div>{ currencyFormat(item.total_soles) }</div>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        }
-                                    </>
-                                )
-                            }                             
-                        </div>
-                    ))
+                        );
+                    })
                 }
         </div>        
     )

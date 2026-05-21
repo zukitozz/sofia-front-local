@@ -1,58 +1,15 @@
 'use client';
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
-import { useRouter } from "next/navigation";
+
 import { useSession } from "next-auth/react";
 import { currencyFormat, toLocaleShow, notify } from "@/utils";
 import { obtieneCierreTurno, saveCierreTurno } from '@/actions/cierreturno';
 import { logout } from "@/actions";
+import { ResumenTable } from '@/components';
 
-const ResumenTable = ({ title, headers, children, footerLabel, footerValue }: any) => {
-    const numCols = headers.length;
-
-    return (
-        <table className="w-full text-lg bg-white border border-gray-300 rounded-lg border-separate mb-4 shadow-sm">
-            <thead>
-                <tr className="bg-gray-100">
-                    <th colSpan={numCols} className="py-2 uppercase text-sm tracking-wider border-b">
-                        {title}
-                    </th>
-                </tr>
-            </thead>
-            <tbody className="text-sm text-black">
-                {/* Encabezados de columna */}
-                <tr className="bg-gray-50 font-bold text-gray-600">
-                    {headers.map((h: string, index: number) => (
-                        <td 
-                            key={h} 
-                            className={`p-2 border-b ${index === 0 ? 'text-left' : 'text-right'}`}
-                        >
-                            {h}
-                        </td>
-                    ))}
-                </tr>
-
-                {/* Contenido (filas) */}
-                {children}
-
-                {/* Fila de Total */}
-                <tr className="font-bold bg-gray-50">
-                    <td className="p-2 border-t text-left">
-                        {footerLabel}
-                    </td>
-                    {/* Genera celdas vacías si hay más de 2 columnas para mantener la alineación */}
-                    {numCols > 2 && <td className="border-t"></td>}
-                    <td className="p-2 border-t text-right text-blue-700">
-                        {currencyFormat(footerValue)}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    );
-};
 
 export const CierreVentas = () => {
-    const router = useRouter();
     const { data: session } = useSession();
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -105,24 +62,49 @@ export const CierreVentas = () => {
             setIsProcessing(false);
             logout();
         }
-
-        
     };
 
     if (error) return <div className="p-7 text-red-500 font-bold">Error al cargar las ventas</div>;
     if (isLoading) return <div className="flex justify-center p-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div></div>;
     if (!data || !stats || stats.balanceFinal === 0) {
         return (
-            <div className="bg-white rounded-xl shadow-xl p-7 col-span-3">
-                <h2 className="text-lg font-bold">Ventas del día:</h2>
-                <p className="text-gray-500">No hay ventas pendientes de cierre</p>
+            <div className="bg-white rounded-xl shadow-xl p-7 col-span-3 border-l-4 border-l-gray-300">
+                <h2 className="text-lg font-bold text-gray-700">Ventas del día:</h2>
+                <p className="text-gray-500 text-sm mt-1">No hay ventas pendientes de cierre</p>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-xl p-7 col-span-3">
-            <h2 className="text-xl font-bold mb-4 border-b pb-2">Resumen de Cierre</h2>
+        /* MODIFICADO: Añadido border-l-4 border-l-emerald-500 para denotar estado ACTIVO / DE OPERACIÓN */
+        <div className="bg-white rounded-xl shadow-xl p-7 col-span-3 border-l-4 border-l-emerald-500">
+            <h2 className="text-xl font-bold mb-4 border-b pb-2 flex items-center gap-2 text-gray-800">
+                <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                Resumen de Cierre
+            </h2>
+
+            {/* Cabecera optimizada: Compacta pero diferenciada con tonos oscuros y limpios */}
+            <div className="flex flex-col gap-1.5 mb-4 pb-3 border-b border-gray-200">
+                <div className="flex gap-4">
+                    <span className="text-gray-500">
+                        <strong className="text-gray-400 font-medium uppercase tracking-wider text-[10px] mr-1">TURNO ACTIVO:</strong> 
+                        <span className="text-emerald-700 font-extrabold bg-emerald-50 px-1.5 py-0.5 rounded text-xs">{session?.user?.jornada}</span>
+                    </span>
+                    <span className="text-gray-300">|</span>
+                    <span className="text-gray-500">
+                        <strong className="text-gray-400 font-medium uppercase tracking-wider text-[10px] mr-1">ISLA:</strong> 
+                        <span className="text-gray-800 font-bold">{session?.user?.isla}</span>
+                    </span>
+                </div>
+
+                <div className="text-gray-500 flex items-center gap-1">
+                    <span className="text-gray-400 font-medium uppercase tracking-wider text-[10px]">APERTURA:</span>
+                    <span className="font-semibold text-gray-700 text-xs">{toLocaleShow(session?.user?.fecha_registro || new Date())}</span>
+                </div>
+            </div>            
             
             {/* 1. Tabla Serafin */}
             {stats.galones.solesSerafin > 0 && (

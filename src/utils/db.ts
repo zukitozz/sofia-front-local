@@ -317,7 +317,7 @@ import { toLocaleStorage } from './formats';
         }
     }
 
-    export async function saveCierreDiaTransaction(session: Session|null, total: number){
+    export async function saveCierreDiaTransaction(session: Session|null, total: number): Promise<ICierreTurnoResponse>{
         config.database = process.env.DB_DATABASE_AUXILIAR||"";
         try {
             const pool: ConnectionPool = await sql.connect(config);
@@ -344,9 +344,15 @@ import { toLocaleStorage } from './formats';
             await sqlRequestComprobantes.query(`Update Cierreturnos set CierrediaId = @CierrediaId where CierrediaId is null`);
 
             await transaction.commit();
+            return {
+                message: "Cierre de dia realizado correctamente",
+                status: true,                    
+            }            
         }catch(error){
-            console.error("Error executing transaction: saveCierreDiaTransaction");
-            console.error(JSON.stringify(error));
-            throw error;
+            console.error("Pool connection error:", error);
+            return {
+                message: `Error al cerrar dia | ${JSON.stringify(error)}`,
+                status: false,                    
+            }
         }
     }    

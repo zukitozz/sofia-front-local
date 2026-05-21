@@ -1,6 +1,6 @@
 "use server";
 import { executeQuery } from '@/utils/db';
-import { ICierreTurno, ICierreTurnoDetalle, IUser } from "@/interfaces";
+import { ICierreTurno, ICierreTurnoDetalle, IDepositos, IGastos, IUser } from "@/interfaces";
 
 export async function obtieneCierreDia(): Promise<ICierreTurno[]> {
     const cierres = await executeQuery<ICierreTurno[]>(
@@ -29,6 +29,24 @@ export async function obtieneCierreDia(): Promise<ICierreTurno[]> {
                 `
             );
             cierre.usuario = usuario[0];
+            const depositos = await executeQuery<IDepositos[]>(
+                process.env.DB_DATABASE_AUXILIAR||"", 
+                `
+                    select id, concepto, monto, usuario, turno, fecha, UsuarioId 
+                    from Depositos 
+                    where CierreturnoId = ${cierre.id};
+                `
+            );
+            cierre.depositos = depositos;
+            const gastos = await executeQuery<IGastos[]>(
+                process.env.DB_DATABASE_AUXILIAR||"", 
+                `
+                    select id, concepto, monto, usuario_gasto, autorizado, turno, fecha, UsuarioId 
+                    from Gastos 
+                    where CierreturnoId = ${cierre.id};
+                `
+            );
+            cierre.gastos = gastos;
             return cierre;
     }))
     return cierres;

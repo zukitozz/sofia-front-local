@@ -1,10 +1,14 @@
 'use client';
+import { useState } from 'react'; // 1. Importamos useState para controlar el flujo
 import useSWR from 'swr';
 
+import { useRouter } from "next/navigation";
 import { obtieneCierreDia, saveCierreDia } from '@/actions'
-import { ICierreTurno, ICierreTurnoDetalle } from '@/interfaces';
-import { currencyFormat, toLocaleStorage } from '@/utils';
+import { ICierreTurno, ICierreTurnoDetalle, IDepositos, IGastos } from '@/interfaces';
+import { currencyFormat, notify, toLocaleStorage } from '@/utils';
 import { useSession } from "next-auth/react";
+import { ResumenTable } from '@/components';
+
 interface TableProps {
   page: number;
   perPage: number;
@@ -12,119 +16,203 @@ interface TableProps {
 }
 
 const fetcher = (page: number, perPage: number, keyword?: string) => obtieneCierreDia();
-//TODO Cierre turno agregar turno e isla
-export const CierreSection = ({ page, perPage, keyword }: TableProps) => {
-    const { data: session } = useSession();
-    const { data, error, isLoading, isValidating } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, (url: string) => fetcher(page, perPage, keyword));
-    if(!data || isLoading || isValidating || error || !Array.isArray(data)){
-        return (<div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div>);
-    }
-    const { total } = data.reduce((a,b)=>{
-        return({
-            total: a.total + b.total
-        })
-    }, { total: 0 });
 
+export const CierreSection = ({ page, perPage, keyword }: TableProps) => {
+    const router = useRouter();
+    const { data: session } = useSession();
+    const [isProcessing, setIsProcessing] = useState(false); // 2. Estado de bloqueo global para el botón
+    
+    const { data, error, isLoading, isValidating } = useSWR(
+        `${process.env.NEXT_PUBLIC_URL}/api`, 
+        (url: string) => fetcher(page, perPage, keyword)
+    );
+
+    if(!data || isLoading || isValidating || error || !Array.isArray(data)){
+        return (
+            <div className="flex justify-center p-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-gray-900 border-b-2"></div>
+            </div>
+        );
+    }
+
+    // --- CÁLCULOS CONSOLIDADOS DEL DÍA ---
+    const { totalGeneral, totalDepositosDia, totalGastosDia } = data.reduce((acc, current) => {
+        const sumDepositos = current.depositos?.reduce((sum, d) => sum + (Number(d.monto) || 0), 0) || 0;
+        const sumGastos = current.gastos?.reduce((sum, g) => sum + (Number(g.monto) || 0), 0) || 0;
+        
+        return {
+            totalGeneral: acc.totalGeneral + (current.total || 0),
+            totalDepositosDia: acc.totalDepositosDia + sumDepositos,
+            totalGastosDia: acc.totalGastosDia + sumGastos
+        };
+    }, { totalGeneral: 0, totalDepositosDia: 0, totalGastosDia: 0 });
+
+    const totalNetoDia = totalGeneral - totalDepositosDia - totalGastosDia;
+
+    // 3. Modificamos el controlador para bloquear el hilo de ejecución inmediatamente
     const handlerProcessCierre = async () => {      
-        await saveCierreDia(session,total);
+        if (isProcessing) return; // Salvaguarda extra a nivel de función
+
+        try{
+            setIsProcessing(true);
+            const { message, status } = await saveCierreDia(session, totalGeneral);
+            if(status){          
+                notify({message})
+            }else{
+                notify({message, type: 'error'})
+            }
+        }finally{
+            setIsProcessing(false);
+            router.push('/')
+        }        
     }  
 
-    return(
+    return (
         <>
-        <div className="gap-10">
-            <button className={`${false ? "btn-disabled" : "btn-primary"} px-5 py-2 mt-3 mb-3`} disabled={false} onClick={() =>handlerProcessCierre()}>
-                    Cerrar dia
-            </button>       
-        </div> 
-        <div className="grid grid-cols-6 sm:grid-cols-6 gap-10">
-            {
-                data.map((cierre : ICierreTurno) => (
-                    <div key={ cierre.id } className="bg-white rounded-xl shadow-xl p-7 col-span-3">
-                        <div className="grid grid-cols-2 gap-2">
-                            <div><b>FECHA:</b> { cierre.fecha? toLocaleStorage(cierre.fecha):'' } </div>
-                            <div><b>TURNO:</b> { cierre.turno } </div>
-                            <div><b>USUARIO:</b> { cierre.usuario?.nombre } </div>
-                            <div><b>ISLA:</b> { cierre.isla } </div>
-                        </div>
-                        {
-                            (cierre.detalle ?? []).filter((producto) => producto.medida == "GLL" && producto.calibracion_cantidad > 0).length > 0 && (
-                                <>
-                                    <hr/>
-                                    <h3 className="mt-5 mb-2"><b>CALIBRACION:</b></h3>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <div>SERAFIN</div>
-                                        <div>GAL</div>
-                                        <div>IMPORTE</div>                            
-                                    </div>
-                                    {
-                                        cierre.detalle?.filter((producto) => producto.medida == "GLL" && producto.calibracion_cantidad > 0).map((item: ICierreTurnoDetalle) => (
-                                            <div key={item.producto}>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <div>{ item.producto}</div>
-                                                    <div>{ item.calibracion_cantidad }</div>
-                                                    <div>{ currencyFormat(item.calibracion_soles) }</div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    }                                    
-                                </>
-                            )
-                        }
-                        {
-                            (cierre.detalle ?? []).filter((producto) => producto.medida == "GLL" && producto.despacho_cantidad > 0).length > 0 && (
-                                <>
-                                    <hr/>
-                                    <h3 className="mt-5 mb-2"><b>NOTAS DESPACHO:</b></h3>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <div>NOTAS DESPACHO</div>
-                                        <div>GAL</div>
-                                        <div>IMPORTE</div>                            
-                                    </div>
-                                    {
-                                        cierre.detalle?.filter((producto) => producto.medida == "GLL" && producto.despacho_cantidad > 0).map((item: ICierreTurnoDetalle) => (
-                                            <div key={item.producto}>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <div>{ item.producto}</div>
-                                                    <div>{ item.despacho_cantidad }</div>
-                                                    <div>{ currencyFormat(item.despacho_soles) }</div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    }                                    
-                                </>
-                            )
-                        }
-                        {
-                            (cierre.detalle ?? []).filter((producto) => producto.medida == "GLL" && producto.total_cantidad > 0).length > 0 && (
-                                <>
-                                    <hr/>
-                                    <h3 className="mt-5 mb-2"><b>PRODUCTOS:</b></h3>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <div>PRODUCTO</div>
-                                        <div>GAL</div>
-                                        <div>IMPORTE</div>                            
-                                    </div>
-                                    {
-                                        cierre.detalle?.filter((producto) => producto.medida == "GLL" && producto.total_cantidad > 0).map((item: ICierreTurnoDetalle) => (
-                                            <div key={item.producto}>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <div>{ item.producto}</div>
-                                                    <div>{ item.total_cantidad }</div>
-                                                    <div>{ currencyFormat(item.total_soles) }</div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    }                                    
-                                </>
-                            )
-                        }                           
-                        {/* <h3>&nbsp;<b>TOTAL:</b> { cierre.total }&nbsp;</h3>
-                        <h2><b>EFECT: </b>{ currencyFormat(cierre.efectivo) }&nbsp;<b>TARJ:</b> { currencyFormat(cierre.tarjeta) }&nbsp;<b>YAPE:</b> { currencyFormat(cierre.yape) }</h2> */}
-                    </div>  
-                ))
-            }
+            {/* BARRA DE ACCIÓN: Banner superior de consolidación masiva */}
+            <div className="bg-slate-800 text-white rounded-xl p-6 mb-6 shadow-md flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div>
+                    <h1 className="text-xl font-bold tracking-tight">Consolidación del Día</h1>
+                    <p className="text-slate-400 text-xs mt-0.5">
+                        Se procesarán <span className="text-emerald-400 font-bold">{data.length} turnos</span> listos para el cierre final.
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 pt-3 border-t border-slate-700 text-xs text-slate-300">
+                        <div>Venta Bruta: <span className="font-semibold text-white">{currencyFormat(totalGeneral)}</span></div>
+                        <div>(-) Depósitos: <span className="font-semibold text-amber-400">{currencyFormat(totalDepositosDia)}</span></div>
+                        <div>(-) Gastos: <span className="font-semibold text-rose-400">{currencyFormat(totalGastosDia)}</span></div>
+                    </div>
+                </div>
+                
+                <div className="flex items-center gap-6 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 border-slate-700 pt-4 lg:pt-0">
+                    <div className="text-right">
+                        <span className="text-slate-400 text-[10px] block font-bold uppercase tracking-wider">TOTAL NETO A ENTREGAR</span>
+                        <span className="text-2xl font-black text-emerald-400">{currencyFormat(totalNetoDia)}</span>
+                    </div>
+                    
+                    {/* 4. Botón Dinámico con Spinner integrado y deshabilitación por hardware */}
+                    <button 
+                        className={`font-bold px-6 py-3 rounded-lg text-sm shadow-lg transition-all whitespace-nowrap flex items-center gap-2 ${
+                            isProcessing 
+                            ? 'bg-slate-600 text-slate-400 cursor-not-allowed shadow-none' 
+                            : 'bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white'
+                        }`}
+                        onClick={handlerProcessCierre}
+                        disabled={isProcessing}
+                    >
+                        {isProcessing ? (
+                            <>
+                                <svg className="animate-spin h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Procesando Cierre...
+                            </>
+                        ) : (
+                            '🚀 Imprimir y Cerrar Día'
+                        )}
+                    </button>
+                </div>
+            </div> 
 
-        </div>
+            {/* GRILLA DE TURNOS INDIVIDUALES */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {
+                    data.map((cierre : ICierreTurno) => {
+                        const totalCalibracion = cierre.detalle
+                            ?.filter(p => p.medida === "GLL" && p.calibracion_cantidad > 0)
+                            .reduce((acc, item) => acc + (item.calibracion_soles || 0), 0) || 0;
+
+                        const totalDespacho = cierre.detalle
+                            ?.filter(p => p.medida === "GLL" && p.despacho_cantidad > 0)
+                            .reduce((acc, item) => acc + (item.despacho_soles || 0), 0) || 0;
+
+                        const totalProductos = cierre.detalle
+                            ?.filter(p => p.medida === "GLL" && p.total_cantidad > 0)
+                            .reduce((acc, item) => acc + (item.total_soles || 0), 0) || 0;
+
+                        const totalDepositosTurno = cierre.depositos
+                            ?.reduce((acc, item) => acc + (Number(item.monto) || 0), 0) || 0;
+
+                        const totalGastosTurno = cierre.gastos
+                            ?.reduce((acc, item) => acc + (Number(item.monto) || 0), 0) || 0;
+
+                        return (
+                            <div key={ cierre.id } className="bg-white rounded-xl shadow-md border border-gray-100 p-5 flex flex-col justify-between">
+                                <div className="space-y-4">
+                                    {/* Cabecera Estructurada */}
+                                    <div className="bg-slate-50 border border-gray-200/60 rounded-lg p-3 grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
+                                        <div className="text-gray-500">
+                                            <span className="font-bold text-gray-400 text-[9px] block tracking-wider uppercase">FECHA</span>
+                                            <span className="font-medium text-gray-800">{ cierre.fecha ? toLocaleStorage(cierre.fecha) : '' }</span>
+                                        </div>
+                                        <div className="text-gray-500">
+                                            <span className="font-bold text-gray-400 text-[9px] block tracking-wider uppercase">TURNO</span>
+                                            <span className="font-bold text-slate-700 bg-slate-200/60 px-1.5 py-0.5 rounded text-[11px]">{ cierre.turno }</span>
+                                        </div>
+                                        <div className="text-gray-500 col-span-1">
+                                            <span className="font-bold text-gray-400 text-[9px] block tracking-wider uppercase">OPERADOR</span>
+                                            <span className="font-medium text-gray-800 truncate block max-w-[140px]">{ cierre.usuario?.nombre || 'N/A' }</span>
+                                        </div>
+                                        <div className="text-gray-500">
+                                            <span className="font-bold text-gray-400 text-[9px] block tracking-wider uppercase">ISLA</span>
+                                            <span className="font-bold text-gray-800">{ cierre.isla }</span>
+                                        </div>
+                                    </div>
+
+                                    {/* TABLAs existentes */}
+                                    {cierre.detalle && cierre.detalle.filter((producto) => producto.medida == "GLL" && producto.calibracion_cantidad > 0).length > 0 && (
+                                        <ResumenTable title="CALIBRACIÓN (SERAFIN)" headers={['PRODUCTO', 'GAL', 'IMPORTE']} footerLabel="SUB TOTAL" footerValue={totalCalibracion}>
+                                            {cierre.detalle.filter((producto) => producto.medida == "GLL" && producto.calibracion_cantidad > 0).map((item: ICierreTurnoDetalle) => (
+                                                <tr key={item.producto}><td className="text-left">{item.producto}</td><td className="text-right">{item.calibracion_cantidad.toFixed(3)}</td><td className="text-right">{currencyFormat(item.calibracion_soles)}</td></tr>
+                                            ))}
+                                        </ResumenTable>
+                                    )}
+
+                                    {cierre.detalle && cierre.detalle.filter((producto) => producto.medida == "GLL" && producto.despacho_cantidad > 0).length > 0 && (
+                                        <ResumenTable title="NOTAS DE DESPACHO" headers={['PRODUCTO', 'GAL', 'IMPORTE']} footerLabel="SUB TOTAL" footerValue={totalDespacho}>
+                                            {cierre.detalle.filter((producto) => producto.medida == "GLL" && producto.despacho_cantidad > 0).map((item: ICierreTurnoDetalle) => (
+                                                <tr key={item.producto}><td className="text-left">{item.producto}</td><td className="text-right">{item.despacho_cantidad.toFixed(3)}</td><td className="text-right">{currencyFormat(item.despacho_soles)}</td></tr>
+                                            ))}
+                                        </ResumenTable>
+                                    )}
+
+                                    {cierre.detalle && cierre.detalle.filter((producto) => producto.medida == "GLL" && producto.total_cantidad > 0).length > 0 && (
+                                        <ResumenTable title="VENTA PRODUCTOS / GALONES" headers={['PRODUCTO', 'GAL', 'IMPORTE']} footerLabel="SUB TOTAL" footerValue={totalProductos}>
+                                            {cierre.detalle.filter((producto) => producto.medida == "GLL" && producto.total_cantidad > 0).map((item: ICierreTurnoDetalle) => (
+                                                <tr key={item.producto}><td className="text-left">{item.producto}</td><td className="text-right">{item.total_cantidad.toFixed(3)}</td><td className="text-right">{currencyFormat(item.total_soles)}</td></tr>
+                                            ))}
+                                        </ResumenTable>
+                                    )}
+
+                                    {cierre.depositos && cierre.depositos.length > 0 && (
+                                        <ResumenTable title="DEPÓSITOS REALIZADOS" headers={['CONCEPTO', 'TURNO', 'MONTO']} footerLabel="TOTAL DEP." footerValue={totalDepositosTurno}>
+                                            {cierre.depositos.map((dep: IDepositos) => (
+                                                <tr key={dep.id}><td className="text-left truncate max-w-[120px]">{dep.concepto}</td><td className="text-center">{dep.turno}</td><td className="text-right text-amber-600 font-medium">{currencyFormat(Number(dep.monto))}</td></tr>
+                                            ))}
+                                        </ResumenTable>
+                                    )}
+
+                                    {cierre.gastos && cierre.gastos.length > 0 && (
+                                        <ResumenTable title="GASTOS OPERATIVOS" headers={['CONCEPTO', 'AUTORIZADO', 'MONTO']} footerLabel="TOTAL GASTOS" footerValue={totalGastosTurno}>
+                                            {cierre.gastos.map((gas: IGastos) => (
+                                                <tr key={gas.id}><td className="text-left truncate max-w-[120px]">{gas.concepto}</td><td className="text-center text-[10px] font-semibold text-slate-500">{gas.autorizado || 'N/A'}</td><td className="text-right text-rose-600 font-medium">{currencyFormat(Number(gas.monto))}</td></tr>
+                                            ))}
+                                        </ResumenTable>
+                                    )}
+                                </div>
+
+                                {/* Importe final */}
+                                <div className="mt-6 pt-3 border-t border-dashed border-gray-200 flex justify-between items-center text-sm">
+                                    <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">Total Turno Neto:</span>
+                                    <span className="font-extrabold text-slate-800 bg-slate-100 px-2 py-1 rounded">
+                                        {currencyFormat((cierre.total || 0) - totalDepositosTurno - totalGastosTurno)}
+                                    </span>
+                                </div>
+                            </div>  
+                        );
+                    })
+                }
+            </div>
         </>
     )
 }
