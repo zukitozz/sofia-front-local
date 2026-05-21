@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { currencyFormat, toLocaleShow, notify } from "@/utils";
 import { obtieneCierreTurno, saveCierreTurno } from '@/actions/cierreturno';
+import { logout } from "@/actions";
 
 const ResumenTable = ({ title, headers, children, footerLabel, footerValue }: any) => {
     const numCols = headers.length;
@@ -102,7 +103,7 @@ export const CierreVentas = () => {
             }
         }finally{
             setIsProcessing(false);
-            router.push('/')
+            logout();
         }
 
         

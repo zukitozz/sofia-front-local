@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { getIslaAuth, getUserAuth, getPistolaAuth } from './actions';
 import { mapearUsuarioDBUsuarioLogin } from './utils/supports';
 import { headers } from 'next/headers';
+import { saveLogin } from './actions/user/save-user';
+import { toLocaleStorage } from './utils';
 
 export const authConfig: NextAuthConfig = {
   pages: {
@@ -50,7 +52,7 @@ export const authConfig: NextAuthConfig = {
 
           if ( !parsedCredentials.success ) return null;
 
-          const { usuario, password, ip, turno } = parsedCredentials.data;
+          const { usuario, password, turno } = parsedCredentials.data;
 
           const headerList = headers();
 
@@ -85,8 +87,9 @@ export const authConfig: NextAuthConfig = {
           }
 
           const pistolas = await getPistolaAuth( id );
+          const fecha_registro = await saveLogin({ terminal: process.env.NEXT_PUBLIC_RS || "", isla: nombre, jornada: turno, ip: ipEncoded, fecha_inicio: toLocaleStorage(new Date()), UsuarioId: user.id });
 
-          return mapearUsuarioDBUsuarioLogin(user, nombre, turno, id, pistolas);
+          return mapearUsuarioDBUsuarioLogin(user, nombre, turno, id, fecha_registro, pistolas);
       },
     }),
 

@@ -2,6 +2,7 @@ import { ICierreTurnoDetalle, ICierreTurnoSoles, IComprobanteAdmin, ICierreTurno
 import sql, { ConnectionPool, ISqlTypeFactoryWithLength, ISqlTypeFactoryWithNoParams, Transaction } from 'mssql';
 import { Constants } from './constants';
 import { Session } from 'next-auth';
+import { toLocaleStorage } from './formats';
 
     const config: sql.config = {
         user: process.env.DB_USER,
@@ -233,21 +234,26 @@ import { Session } from 'next-auth';
                 const usuarioId = +(session?.user.id || 0);
                 const turno = session?.user.jornada || "";
                 const isla = session?.user.isla || "";
+                const fecha_inicio = session?.user.fecha_registro || "";
                 await transaction.begin();
                 //Insertar cierre
                 const sqlRequest = new sql.Request(transaction);
                 sqlRequest.input('total', sql.Float, total);
+                sqlRequest.input('fecha', sql.NVarChar, toLocaleStorage(new Date()));
+                sqlRequest.input('fecha_inicio', sql.NVarChar, fecha_inicio);
                 sqlRequest.input('turno', sql.NVarChar, turno);
                 sqlRequest.input('isla', sql.NVarChar, isla);
                 sqlRequest.input('efectivo', sql.Float, soles.efectivo);
                 sqlRequest.input('tarjeta', sql.Float, soles.tarjeta);
                 sqlRequest.input('yape', sql.Float, soles.yape);
                 sqlRequest.input('UsuarioId', sql.Int, usuarioId);
+                
+                
 
                 const result = await sqlRequest.query(`INSERT INTO Cierreturnos (
-                    total, fecha, turno, isla, efectivo, tarjeta, yape, UsuarioId
+                    total, fecha, fecha_inicio, turno, isla, efectivo, tarjeta, yape, UsuarioId
                 ) VALUES ( 
-                    @total, GETDATE(), @turno, @isla, @efectivo, @tarjeta, @yape, @UsuarioId
+                    @total, @fecha, @fecha_inicio, @turno, @isla, @efectivo, @tarjeta, @yape, @UsuarioId
                 ); SELECT SCOPE_IDENTITY() AS id;`);
                 
                 const cierreturnoId = result.recordset[0]?.id;
@@ -278,6 +284,13 @@ import { Session } from 'next-auth';
                 sqlRequestDepositos.input('UsuarioId', sql.Int, usuarioId);
                 await sqlRequestDepositos.query(`Update Depositos set CierreturnoId = @CierreturnoId where UsuarioId = @UsuarioId and CierreturnoId is null`);
 
+
+                const sqlRequestLogins = new sql.Request(transaction);
+                sqlRequestLogins.input('UsuarioId', sql.Int, usuarioId);
+                sqlRequestLogins.input('jornada', sql.NVarChar, turno);
+                sqlRequestLogins.input('fecha_fin', sql.NVarChar, toLocaleStorage(new Date()));
+                await sqlRequestLogins.query(`Update Logins set fecha_fin = @fecha_fin where UsuarioId = @UsuarioId and fecha_fin is null and jornada = @jornada`);
+
                 await transaction.commit();
 
                 return {
@@ -304,11 +317,13 @@ import { Session } from 'next-auth';
         }
     }
 
-    export async function saveCierreDiaTransaction(total: number, isla: string){
+    export async function saveCierreDiaTransaction(session: Session|null, total: number){
         config.database = process.env.DB_DATABASE_AUXILIAR||"";
         try {
             const pool: ConnectionPool = await sql.connect(config);
             const transaction: Transaction = new sql.Transaction(pool);
+            const isla = session?.user.isla || "";
+        
             await transaction.begin();
             //Insertar cierre
             const sqlRequest = new sql.Request(transaction);

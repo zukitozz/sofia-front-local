@@ -25,10 +25,8 @@ export const CierreSection = ({ page, perPage, keyword }: TableProps) => {
         })
     }, { total: 0 });
 
-    const isla = session?.user.isla || "";
-
     const handlerProcessCierre = async () => {      
-        await saveCierreDia(total, isla);
+        await saveCierreDia(session,total);
     }  
 
     return(

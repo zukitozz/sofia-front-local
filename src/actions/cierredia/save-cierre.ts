@@ -1,9 +1,10 @@
 'use server';
 import { saveCierreDiaTransaction } from '@/utils/db';
+import { Session } from 'next-auth';
 
-export async function saveCierreDia(total: number, isla: string): Promise<void> {
+export async function saveCierreDia(session: Session|null, total: number): Promise<void> {
     try {
-        return await saveCierreDiaTransaction(total, isla);
+        return await saveCierreDiaTransaction(session, total);
     } catch (error) {
         console.error("Error saveCierreTurno");
         console.error(JSON.stringify(error));

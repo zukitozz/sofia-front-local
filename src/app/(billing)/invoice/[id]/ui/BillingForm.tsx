@@ -91,7 +91,6 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
         try { 
             await procesarComprobante();
         } finally {
-            await delay(2000);
             setIsProcessing(false);
             router.push('/')
         }

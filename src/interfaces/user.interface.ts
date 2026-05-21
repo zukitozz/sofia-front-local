@@ -38,3 +38,14 @@ export interface IDbResponse {
     success: boolean;
     message: string;
 }
+
+export interface IUserLogLogin {
+    id?: string;
+    terminal: string;
+    isla: string;
+    jornada: string;        
+    ip: string; 
+    fecha_fin?: string;
+    fecha_inicio: string;
+    UsuarioId: number;
+}
