@@ -23,7 +23,8 @@ export const initialProductForm: IProduct = {
     valor: 0,
     color: "",
     estado: 0,
-    img: ""
+    img: "",
+    tipo: "VENTA_ISLA"
 }
 
 export const initialGastoForm: IGastos = {
