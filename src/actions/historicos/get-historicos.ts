@@ -24,9 +24,9 @@ export async function getHistoricos(page: number, perPage: number, fecha: string
                         FROM Comprobantes c
                         LEFT JOIN Cierreturnos t on c.CierreturnoId = t.id 
                         INNER JOIN Usuarios u on c.UsuarioId = u.id 
-                        WHERE c.fecha_emision = '${fecha}' ${filtroNumeracion}
+                        WHERE CAST(c.fecha_emision AS DATE) = '${fecha}' ${filtroNumeracion}
                         ) as Result WHERE RowNum BETWEEN ${start} AND ${end} order by fecha_hora desc;`
-        
+
         const historicos = await executeQuery<IComprobanteHistorico[]>(
             process.env.DB_DATABASE_AUXILIAR||"", 
             query
@@ -34,7 +34,7 @@ export async function getHistoricos(page: number, perPage: number, fecha: string
 
         const total = await executeQuery<[]>(
             process.env.DB_DATABASE_AUXILIAR||"", 
-            `SELECT c.id FROM Comprobantes c LEFT JOIN Cierreturnos t on c.CierreturnoId = t.id INNER JOIN Usuarios u on c.UsuarioId = u.id WHERE c.fecha_emision = '${fecha}'`
+            `SELECT c.id FROM Comprobantes c LEFT JOIN Cierreturnos t on c.CierreturnoId = t.id INNER JOIN Usuarios u on c.UsuarioId = u.id WHERE CAST(c.fecha_emision AS DATE) = '${fecha}'`
         );
                 
         const pageNumbers = [];

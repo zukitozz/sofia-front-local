@@ -35,5 +35,9 @@ export const Constants = {
     ROL: {
         ADMIN_ROLE: 'ADMIN_ROLE',
         USER_ROLE: 'USER_ROLE'
+    },
+    AMBITO_PRODUCTOS: {
+        ISLA: 'VENTA_ISLA',
+        ADMINISTRADOR: 'VENTA_TOTAL'
     }
 }

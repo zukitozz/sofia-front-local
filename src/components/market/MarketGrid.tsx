@@ -36,9 +36,12 @@ export const MarketGrid = ({ tipo_usuario }: Props) => {
     }
 
     // 3. El filtrado se mantiene igual
-    const productos: IProduct[] = tipo_usuario === Constants.ROL.USER_ROLE 
-        ? data.products.filter((producto: IProduct) => producto.medida !== Constants.MEDIDA.GALON) 
-        : data.products.filter((producto: IProduct) => producto.medida === Constants.MEDIDA.GALON);
+
+    let filtro: string | null = null;
+    if (tipo_usuario === Constants.ROL.USER_ROLE) {
+        filtro = Constants.AMBITO_PRODUCTOS.ISLA;
+    }
+    const productos: IProduct[] = filtro ? data.products.filter((producto: IProduct) => producto.tipo === Constants.AMBITO_PRODUCTOS.ISLA):data.products
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-10 mb-10">

@@ -20,6 +20,11 @@ const medidas = [
   { id: "LTR", value: "Litros" }
 ];
 
+const tipos = [
+  { id: "VENTA_ISLA", value: "Isla y Administradores" },
+  { id: "VENTA_TOTAL", value: "Solo Administradores" }
+];
+
 export const ProductForm = ({ product }: Props) => {
     const router = useRouter();
     const isNewProduct = product.id==0;
@@ -136,6 +141,25 @@ return (
                 required
               />
             </div>
+
+            {/* Campo: Tipo */}
+            <div className='flex flex-col'>
+              <label className="font-semibold mb-1" htmlFor="tipo">Tipo de Producto</label>
+              <select 
+                id="tipo"
+                name="tipo" 
+                className="px-5 py-2 border bg-white rounded shadow-sm focus:outline-blue-500"
+                value={formValues.tipo}
+                onChange={onInputChange}
+                required
+              >
+                <option value="">Seleccione</option>
+                {tipos.map(item => (
+                  <option key={item.id} value={item.id}>{item.value}</option>
+                ))}
+              </select>
+            </div>
+
             <UploadButton
               endpoint="imageUploader"
               appearance={{

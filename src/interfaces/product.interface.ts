@@ -11,6 +11,7 @@ export interface IProduct {
     color: string;
     estado: number;
     img: string;
+    tipo: string;
 }
 export interface IFuelProduct {
     id: number;

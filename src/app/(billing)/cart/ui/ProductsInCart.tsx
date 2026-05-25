@@ -1,5 +1,6 @@
 'use client';
 import { ProductImage, QuantitySelector } from "@/components";
+import { TotalSelector } from "@/components/product/quantity-selector/TotalSelector";
 import { useOrderAbastecimientoStore } from "@/store";
 import { currencyFormat } from "@/utils/formats";
 import Link from "next/link";
@@ -11,6 +12,7 @@ export const ProductsInCart = () => {
     const [loaded, setLoaded] = useState(false);
     const productsInCart = useOrderAbastecimientoStore( state => state.items );
     const updateProductQuantity = useOrderAbastecimientoStore( state => state.updateProductQuantity );
+    const upgradeProductTotal = useOrderAbastecimientoStore( state => state.upgradeProductTotal );
     const removeProduct = useOrderAbastecimientoStore( state => state.removeProduct );
 
     useEffect(() => {
@@ -43,11 +45,17 @@ export const ProductsInCart = () => {
                             <p>Precio: {currencyFormat(product.precio_unitario)}</p>
                             {
                                 !product.id_abastecimiento && (
-                                    <QuantitySelector 
-                                    quantity={ product.cantidad } 
-                                    type = { product.medida }                                    
-                                    onQuantityChanged={ quantity => updateProductQuantity(product, quantity) }
-                                    />                                    
+                                        product.medida === 'GLL'? (
+                                            <TotalSelector 
+                                            total={ 0 } 
+                                            onTotalChanged={ total => upgradeProductTotal(product, total) }
+                                            />
+                                        ) : (
+                                            <QuantitySelector 
+                                            quantity={ product.cantidad } 
+                                            onQuantityChanged={ quantity => updateProductQuantity(product, quantity) }
+                                            />
+                                        )
                                 )
                             }
 

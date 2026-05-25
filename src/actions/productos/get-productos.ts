@@ -14,7 +14,7 @@ export async function getProductos(page: number, perPage: number, keyword?: stri
         const products = await executeQuery<IProduct[]>(
             process.env.DB_DATABASE_AUXILIAR||"", 
             `select * from (
-                        SELECT id,nombre,descripcion,imagenes,stock,codigo,medida,precio,valor,estado,color,img, ROW_NUMBER() OVER (ORDER BY id) AS RowNum FROM Productos WHERE estado = 1 
+                        SELECT id,nombre,descripcion,imagenes,stock,codigo,medida,precio,valor,estado,color,img, tipo, ROW_NUMBER() OVER (ORDER BY id) AS RowNum FROM Productos WHERE estado = 1 
                         ) as Result WHERE RowNum BETWEEN ${start} AND ${end} ;`
         );
         
@@ -43,7 +43,7 @@ export async function getProducto(id: number): Promise<IProduct> {
     try {
      const productos = await executeQuery<IProduct[]>(
         process.env.DB_DATABASE_AUXILIAR||"", 
-        `SELECT id,nombre,descripcion,imagenes,stock,codigo,medida,precio,valor,estado,color,img FROM Productos WHERE id = ${id}`
+        `SELECT id,nombre,descripcion,imagenes,stock,codigo,medida,precio,valor,estado,color,img, tipo FROM Productos WHERE id = ${id}`
     );
      return productos[0] as IProduct;
     } catch (error) {
@@ -57,7 +57,7 @@ export async function getProductoPorCodigo(codigo: string): Promise<IProduct> {
     try {
      const productos = await executeQuery<IProduct[]>(
         process.env.DB_DATABASE_AUXILIAR||"", 
-        `SELECT id,nombre,descripcion,imagenes,stock,codigo,medida,precio,valor,estado,color,img FROM Productos WHERE codigo = '${codigo}'`
+        `SELECT id,nombre,descripcion,imagenes,stock,codigo,medida,precio,valor,estado,color,img, tipo FROM Productos WHERE codigo = '${codigo}'`
     );
      return productos[0] as IProduct;
     } catch (error) {
@@ -71,7 +71,7 @@ export async function getProductosLista(): Promise<IProduct[]> {
     try {
      const productos = await executeQuery<IProduct[]>(
         process.env.DB_DATABASE_AUXILIAR||"", 
-        `SELECT id,nombre,descripcion,imagenes,stock,codigo,medida,precio,valor,estado,color,img FROM Productos WHERE estado = 1`
+        `SELECT id,nombre,descripcion,imagenes,stock,codigo,medida,precio,valor,estado,color,img, tipo FROM Productos WHERE estado = 1`
     );
      return productos as IProduct[];
     } catch (error) {

@@ -11,6 +11,7 @@ interface State {
     getTotalItems: () => number;
     addAbastecimientoToOrder: (item: IAbastecimiento ) => void;
     updateProductQuantity: (product: IOrderItem, quantity: number) => void;
+    upgradeProductTotal: (product: IOrderItem, total: number) => void;
     addProductToOrder: (product: IProduct ) => void;
     getSummaryInformation: () => { subTotal: number; totalIgv: number; total: number };
     removeProduct: (product: IOrderItem) => void;
@@ -71,7 +72,7 @@ export const useOrderAbastecimientoStore = create<State>()(
                     cantidad: 1,
                     precio: product.precio,
                     valor: product.valor,
-                    igv: product.valor * taxRate,
+                    igv: Math.round((product.valor * taxRate)*100)/100,
                     valor_unitario: product.valor,
                     precio_unitario: product.precio,
                     descripcion: product.nombre,
@@ -116,6 +117,22 @@ export const useOrderAbastecimientoStore = create<State>()(
                 const { items } = get();
                 const updatedItems = items.map((item) => {
                     if (item.codigo_producto === product.codigo_producto) {
+                        const precio = Math.round((item.precio_unitario * quantity)*100)/100;
+                        const valor = Math.round((item.valor_unitario * quantity)*10000000000)/10000000000;
+                        const igv = Math.round((precio - valor)*100)/100;
+                        return { 
+                            ...item, precio, valor, igv, cantidad: quantity
+                        };
+                    }
+                    return item;
+                });
+                set({ items: updatedItems });
+            },
+            upgradeProductTotal: (product: IOrderItem, total: number) => {
+                const { items } = get();
+                const updatedItems = items.map((item) => {
+                    if (item.codigo_producto === product.codigo_producto) {
+                        const quantity = Math.round((total / item.precio_unitario)*1000)/1000;
                         const precio = Math.round((item.precio_unitario * quantity)*100)/100;
                         const valor = Math.round((item.valor_unitario * quantity)*10000000000)/10000000000;
                         const igv = Math.round((precio - valor)*100)/100;
