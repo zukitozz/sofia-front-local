@@ -4,12 +4,15 @@ import { AbastecimientoGridItem } from "./AbastecimientoGridItem"
 import useSWR from 'swr';
 import { getAbastecimientos } from "@/actions";
 import { Constants } from "@/utils";
+import { useOrderAbastecimientoStore } from "@/store";
 
 interface Props{
     pistolas: number[]
 }
 
 export const AbastecimientoGrid = ({ pistolas }: Props) => {
+  const removeAllProducts = useOrderAbastecimientoStore((state) => state.removeAllProducts);
+  removeAllProducts(); // Limpiar productos anteriores al cargar la página    
     const { data } = useSWR<IAbastecimiento[]>(`${process.env.NEXT_PUBLIC_URL}/api/abastecimientos`, 
         () => getAbastecimientos(pistolas, Constants.ESTADOS_ABASTECIMIENTO.PENDIENTE), { 
             refreshInterval: 2000,

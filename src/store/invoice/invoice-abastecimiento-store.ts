@@ -1,10 +1,12 @@
-import { IAbastecimiento, IFuelProduct, IOrderItem, IProduct } from "@/interfaces";
+import { IAbastecimiento, IComprobanteAdmin, IFuelProduct, INotaDespacho, IOrderItem, IProduct } from "@/interfaces";
 import { Constants } from "@/utils";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { getDescuentosByNumeroDocumento, getProductoPorCodigo } from '@/actions';
 
 interface State {
+    
+    notas:IComprobanteAdmin[];
     items: IOrderItem[];
     getTotalItems: () => number;
     addAbastecimientoToOrder: (item: IAbastecimiento ) => void;
@@ -14,12 +16,14 @@ interface State {
     removeProduct: (product: IOrderItem) => void;
     applyDiscountIfExists: (numeroDocumento: string) => Promise<{ status: boolean; message: string }>;
     removeAllProducts: () => void;
+    addNotaDespachoToOrder: (item: INotaDespacho) => void;
 }
 
 export const useOrderAbastecimientoStore = create<State>()( 
     persist(
         (set, get) => ({
             items: [],
+            notas: [],
             getTotalItems: () => {
                 const { items } = get();
                 let new_cantidad = 0;
@@ -36,6 +40,7 @@ export const useOrderAbastecimientoStore = create<State>()(
                 return { subTotal, totalIgv, total };
             },
             addAbastecimientoToOrder: async ({ idAbastecimiento, valorTotal, volTotal, codigoCombustible, precioUnitario ,pistola, tiempo, fechaHora, totInicio, totFinal }: IAbastecimiento) => {
+                set({ items: [], notas: [] });
                 const producto = await getProductoPorCodigo(codigoCombustible.toString());
                 const taxRate = Number.parseFloat(process.env.NEXT_PUBLIC_TAX || "0.18");
                 const orderItem: IOrderItem = {
@@ -90,6 +95,23 @@ export const useOrderAbastecimientoStore = create<State>()(
                 });
                 set({ items: updatedItems });
             },
+            addNotaDespachoToOrder: ({ valor, precio, igv, descripcion, items }: INotaDespacho) => {
+                set({ items: [], notas: [] });
+                const despachoItem: IOrderItem = {
+                    cantidad: 1,
+                    precio,
+                    valor,
+                    igv,
+                    valor_unitario: valor,
+                    precio_unitario: precio,
+                    descripcion: descripcion ?? "Producto de nota de despacho",
+                    codigo_producto: '',
+                    medida: 'NIU',
+                    img: ''
+                }
+                console.log('Despacho item a agregar:', despachoItem);
+                set({ items: [despachoItem], notas: items });
+            },
             updateProductQuantity: (product: IOrderItem, quantity: number) => {
                 const { items } = get();
                 const updatedItems = items.map((item) => {
@@ -136,7 +158,7 @@ export const useOrderAbastecimientoStore = create<State>()(
                 return { status, message: "Descuentos aplicados correctamente" };
             },
             removeAllProducts: () => {
-                set({ items: [] });
+                set({ items: [], notas: [] });
             },
         }),
         {

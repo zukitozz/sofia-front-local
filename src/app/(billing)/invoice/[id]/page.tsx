@@ -21,7 +21,7 @@ export default function InvoiceByIdPage({ params }: Props) {
             <Title title={`Detalle de la orden`} />
             <div className="grid grid-cols-5 sm:grid-cols-5 gap-10">
                 <div className="bg-white rounded-xl shadow-xl p-7 col-span-3">
-                    <BillingForm total={total} subTotal={subTotal} totalIgv={totalIgv} orders={orders} />
+                    <BillingForm total={total} subTotal={subTotal} totalIgv={totalIgv} orders={orders}/>
                 </div>  
                 <div className="bg-white rounded-xl shadow-xl p-7 col-span-2">
                     <BillingSummary orderInBilling={orders} subTotal={subTotal} totalIgv={totalIgv} total={total} />

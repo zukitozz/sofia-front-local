@@ -7,16 +7,17 @@ import { Constants } from '@/utils/constants';
 interface Props {
     formValues: IBillingForm;
     setFormValues: (values: IBillingForm) => void;
+    isDisabled?: boolean;
 }
 
-export const Placa = ({ formValues, setFormValues }: Props) => {
-
+export const Placa = ({ formValues, setFormValues, isDisabled }: Props) => {
+    
     const [suggestions, setSuggestions] = useState<IReceptorPlaca[]>([]); 
-    const { tipoDocumento } = formValues;
 
     const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setFormValues({ ...formValues, placa: value.toLocaleUpperCase() });
+        if(isDisabled) return;
         if(value.length > 2){
             const allSuggestions = await getPlacas(value);
             const filtredSuggestions = allSuggestions.filter(suggestion => suggestion.placa.toLowerCase().includes(value.toLowerCase()));

@@ -13,7 +13,6 @@ export async function saveUsuario({ id, nombre, usuario, correo, rol }: IUser): 
     let message = `Ocurrió un error al registrar usuario`;
     try {
         const query = id? `UPDATE Usuarios set nombre = '${nombre}', usuario = '${usuario}', correo = '${correo}' where id = ${id}` : `INSERT into Usuarios (nombre, usuario, correo, password, rol, EmisorId) values ('${nombre}', '${usuario}', '${correo}', 'MTIzNA==', '${rol}', 1)`;
-        console.log("Executing query:", query);
         const user = await executeQuery<IUser[]>(
             process.env.DB_DATABASE_AUXILIAR||"", query
             

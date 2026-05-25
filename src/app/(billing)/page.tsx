@@ -5,6 +5,7 @@ import { toIsoString } from "@/utils";
 export default async function Home() {
 
   const session = await auth();
+
   return (
     <>
         <Title 

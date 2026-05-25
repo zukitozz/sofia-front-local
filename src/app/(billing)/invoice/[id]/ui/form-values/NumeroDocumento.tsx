@@ -9,9 +9,10 @@ import { IoPricetag } from 'react-icons/io5';
 interface Props {
     formValues: IBillingForm;
     setFormValues: (values: IBillingForm) => void;
+    isDisabled?: boolean;
 }
 
-export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
+export const NumeroDocumento = ({ formValues, setFormValues, isDisabled }: Props) => {
     
     const applyDiscountIfExists = useOrderAbastecimientoStore((state) => state.applyDiscountIfExists);
 
@@ -78,7 +79,7 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
                 onChange={ handleChangeNumeroDocumento }
                 onKeyDown={ handleKeyNumeroDocumento }
                 autoComplete="off"
-                disabled={disabled}
+                disabled={isDisabled || disabled}
             />
             {hasDiscount && (
                 <div className="flex items-center animate-bounce">

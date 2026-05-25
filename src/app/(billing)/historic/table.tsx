@@ -243,7 +243,7 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                                                 {page}
                                             </button>
                                         ) : (
-                                            <span key={index} className="px-2 text-gray-500">...</span>
+                                            <span key={page} className="px-2 text-gray-500">...</span>
                                         )
                                     ))
                                 }

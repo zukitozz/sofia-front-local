@@ -51,6 +51,7 @@ export interface IComprobanteAdmin {
     xml_envio?: string;
     impresion?: number;
     IslaId: number;
+    notas?: number[];
     items: IComprobanteAdminItem[];
 }
 export interface IComprobanteAdminItem {

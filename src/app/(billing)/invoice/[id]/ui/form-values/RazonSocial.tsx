@@ -7,9 +7,10 @@ import { Constants } from '@/utils/constants';
 interface Props {
     formValues: IBillingForm;
     setFormValues: (values: IBillingForm) => void;
+    isDisabled?: boolean;
 }
 
-export const RazonSocial = ({ formValues, setFormValues }: Props) => {
+export const RazonSocial = ({ formValues, setFormValues, isDisabled }: Props) => {
 
     const [suggestions, setSuggestions] = useState<IReceptor[]>([]); 
 
@@ -48,6 +49,7 @@ export const RazonSocial = ({ formValues, setFormValues }: Props) => {
                 value={ formValues.razonSocial }
                 onChange={ handleChange } 
                 onKeyDown={ handleKeyDown }
+                disabled={isDisabled}
             />
             <SuggestionInput suggestions={suggestions} onSelect={handleSelectSuggestion}/>
         </div>

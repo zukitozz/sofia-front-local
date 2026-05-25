@@ -31,6 +31,7 @@ export class Comprobante implements IComprobanteAdmin{
     codigo_combustible: string;
     dec_combustible: string;
     volumen: number;
+    notas: number[];
     fecha_abastecimiento: string | null;
     tiempo_abastecimiento: number| null;
     volumen_tanque: number;
@@ -56,7 +57,7 @@ export class Comprobante implements IComprobanteAdmin{
         receptor: IReceptor, tipo_comprobante: string, gravadas: number, igv: number, total: number, tarjeta: number, efectivo: number, yape: number,
         ruc: string, UsuarioId: number, items: IComprobanteAdminItem[], placa: string|null, 
         fecha_abastecimiento: Date|null, tiempo_abastecimiento: number | null, IslaId: number, 
-        id_abastecimiento: number = 0, pistola: number = 0, codigo_combustible: string = "", volumen: number = 0, 
+        id_abastecimiento: number = 0, pistola: number = 0, codigo_combustible: string = "", volumen: number = 0, notas: number[] = [], 
         volumen_tanque: number = 0, dec_combustible: string = "", comentario: string = ""
     ) {
         this.tipo_comprobante = tipo_comprobante;
@@ -86,6 +87,7 @@ export class Comprobante implements IComprobanteAdmin{
         this.Receptor = receptor;
         this.codigo_combustible = codigo_combustible;
         this.volumen = volumen;
+        this.notas = notas;
         this.dec_combustible = dec_combustible;
         this.fecha_abastecimiento = moment(fecha_abastecimiento).format("YYYY-MM-DD HH:mm:ss");
         this.tiempo_abastecimiento = tiempo_abastecimiento;

@@ -206,6 +206,17 @@ import { toLocaleStorage } from './formats';
                                 @codigo_producto, @medida, @valor_venta, @precio_venta, @valor, @precio, @igv_venta, @codigo, @cantidad_venta
                             );`);
                     }   
+                    //Actualizar notas relacionadas
+                    if(comprobante.notas && comprobante.notas.length > 0){
+
+                        for (const notaId of comprobante.notas) {
+                            const sqlRequestNotas = new sql.Request(transaction);
+                            sqlRequestNotas.input('comprobante_nota_despacho', sql.NVarChar, numeracion_comprobante);
+                            sqlRequestNotas.input('fecha_facturado_nota_despacho', sql.NVarChar, fecha_emision);
+                            sqlRequestNotas.input('id_comprobante', sql.Int, notaId);
+                            await sqlRequestNotas.query(`UPDATE Comprobantes SET estado_nota_despacho = 1, comprobante_nota_despacho = @comprobante_nota_despacho, fecha_facturado_nota_despacho = @fecha_facturado_nota_despacho WHERE id = @id_comprobante`);
+                        }
+                    }
                     //Actualizar abastecimientos
                     const sqlRequestAbatecimientos = new sql.Request(transaction);
                     sqlRequestAbatecimientos.input('idAbastecimiento', sql.Int, id_abastecimiento);

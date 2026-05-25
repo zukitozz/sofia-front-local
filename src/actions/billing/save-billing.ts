@@ -63,7 +63,6 @@ export async function saveCheckNc(documento_principal: string, documento_afectad
         await executeQuery(
             process.env.DB_DATABASE_AUXILIAR||"", query
         );
-        console.log(query);
         message = `Comprobante marcado como verificado para NC`;
         return {
             message,

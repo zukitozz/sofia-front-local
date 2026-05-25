@@ -1,11 +1,11 @@
-
 import { IBillingForm } from '@/interfaces';
 import React from 'react'
 interface Props {
     formValues: IBillingForm;
     setFormValues: (values: IBillingForm) => void;
+    isDisabled?: boolean;
 }
-export const Direccion = ({ formValues, setFormValues }: Props) => {
+export const Direccion = ({ formValues, setFormValues, isDisabled }: Props) => {
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setFormValues({ ...formValues, direccion: event.target.value });
     };    
@@ -24,6 +24,7 @@ export const Direccion = ({ formValues, setFormValues }: Props) => {
                 value={ formValues.direccion }
                 onChange={ handleChange }
                 onKeyDown={ handleKeyDown }
+                disabled={isDisabled}
             />
         </div>
     )

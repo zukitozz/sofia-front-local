@@ -10,7 +10,6 @@ interface Props {
   };
 }
 
-const fetcher = (id: number) => getHistoricoById(id);
 
 export default async function InvoiceByIdPage({ params }: Readonly<Props>) {
     const { id } = params;

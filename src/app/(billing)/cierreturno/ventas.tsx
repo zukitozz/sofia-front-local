@@ -191,6 +191,40 @@ export const CierreVentas = () => {
                 <span className="text-blue-700">{currencyFormat(stats.balanceFinal)}</span>
             </div>
 
+{/* --- LEYENDA DEL CÁLCULO --- */}
+            <div className="mt-4 pt-3 border-t border-blue-200 text-[11px] text-gray-600 font-normal normal-case tracking-normal space-y-1">
+                <p className="font-semibold text-blue-900 mb-1 uppercase tracking-wider text-[10px]">
+                    ¿Cómo se calcula este monto?
+                </p>
+                <p className="flex justify-between">
+                    <span>(+) Total de Pagos Recibidos (Efectivo + Tarjeta + Yape):</span>
+                    <span className="font-medium">{currencyFormat(stats.totTipoPago)}</span>
+                </p>
+                {stats.totalDepositos > 0 && (
+                    <p className="flex justify-between text-red-600">
+                        <span>(–) Depósitos realizados:</span>
+                        <span className="font-medium">– {currencyFormat(stats.totalDepositos)}</span>
+                    </p>
+                )}
+                {stats.totalGastos > 0 && (
+                    <p className="flex justify-between text-red-600">
+                        <span>(–) Gastos del turno:</span>
+                        <span className="font-medium">– {currencyFormat(stats.totalGastos)}</span>
+                    </p>
+                )}
+                {stats.galones.solesSerafin > 0 && (
+                    <p className="flex justify-between text-red-600">
+                        <span>(–) Notas de Despacho / Serafín:</span>
+                        <span className="font-medium">– {currencyFormat(stats.galones.solesSerafin)}</span>
+                    </p>
+                )}
+                <div className="border-t border-dashed border-blue-200 my-1"></div>
+                <p className="text-gray-500 italic">
+                    * Nota: El "Efectivo a Entregar" descuenta los gastos, depósitos, notas de despacho y calibraciones del total vendido.
+                </p>
+            </div>
+            {/* --------------------------- */}            
+
             <button 
                 className="btn-primary px-5 py-3 mt-4 w-full text-lg shadow-lg active:scale-95 transition-transform"
                 onClick={handlerProcessCierre} disabled={isProcessing}

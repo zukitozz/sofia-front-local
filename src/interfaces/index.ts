@@ -8,3 +8,4 @@ export * from './product.interface';
 export * from './receptor.interface';
 export * from './reporte.interface';
 export * from './user.interface';
+export * from './notadespacho.interface';

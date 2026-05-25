@@ -21,16 +21,40 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
     const router = useRouter();
     const { data: session } = useSession();
     const [isProcessing, setIsProcessing] = useState(false);
+    
     const removeAllProducts = useOrderAbastecimientoStore((state) => state.removeAllProducts);
+    
+    // 1. Consumimos las notas del Store de Zustand
+    const notas = useOrderAbastecimientoStore((state) => state.notas);
+    
+    // Determinamos de forma limpia si el formulario debe estar deshabilitado/bloqueado
+    const isDisabled = notas.length > 0;
 
     const [formValues, setFormValues] = useState<IBillingForm>({
         ...initialBillingForm, 
         efectivo: total 
     });
 
+    // 2. EFECTO PROFESIONAL: Escucha cambios en 'total' y en 'notas' de forma unificada
     useEffect(() => {
-        setFormValues(prevValues => ({ ...prevValues, efectivo: total }));
-    }, [total])
+        if (notas.length > 0) {
+            // Tomamos la primera nota como referencia para extraer los datos del cliente
+            const primeraNota = notas[0];
+            
+            setFormValues(prevValues => ({
+                ...prevValues,
+                tipoComprobante: Constants.TIPO_COMPROBANTE.FACTURA, // Por defecto Factura si viene de Nota de Despacho
+                tipoDocumento: Constants.TIPO_DOCUMENTO.RUC,   // Por defecto RUC
+                numeroDocumento: primeraNota.Receptor.numero_documento || '',
+                razonSocial: primeraNota.Receptor.razon_social || '',
+                direccion: primeraNota.Receptor.direccion || '',
+                efectivo: total // Mantiene el total actualizado
+            }));
+        } else {
+            // Si no hay notas, solo aseguramos que el efectivo refleje el total actual
+            setFormValues(prevValues => ({ ...prevValues, efectivo: total }));
+        }
+    }, [total, notas]); // Se gatilla de forma precisa si el total cambia o si seleccionan otra nota
     
 
     const { tipoComprobante, tipoDocumento, numeroDocumento, razonSocial, placa, direccion, efectivo, tarjeta, yape } = formValues;
@@ -59,7 +83,6 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
                 return false;            
             }
 
-
             if (tipoDocumento === Constants.TIPO_DOCUMENTO.RUC && numeroDocumento.length !== 11) {
                 notify({ message: 'El RUC debe tener 11 dígitos', type: 'error' });
                 return false;
@@ -75,8 +98,6 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
             notify({ message: 'Ingrese la razón social', type: 'error' });
             return false;
         }    
-
-
 
         return true;
     };    
@@ -95,10 +116,6 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
             router.push('/')
         }
     }
-
-    const delay = (ms: number): Promise<void> => {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    };
 
     const procesarComprobante = async () => {
         const receptor: IReceptor = {
@@ -137,10 +154,11 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
         const codigo_producto = order_abastecimiento?.codigo_producto || "";
         const pistola = order_abastecimiento?.pistola || 0;
         const ruc = process.env.NEXT_PUBLIC_RUC || ""
+        const arr_notas: number[] = notas.map(nota => nota.id || 0);
 
         const comprobante = new Comprobante(
             receptor, tipoComprobante, subTotal, totalIgv, total, tarjeta, efectivo, yape, ruc, UsuarioId, items, placa, 
-            fecha_abastecimiento, tiempo_abastecimiento, IslaId, id_abastecimiento, pistola, codigo_producto, cantidad
+            fecha_abastecimiento, tiempo_abastecimiento, IslaId, id_abastecimiento, pistola, codigo_producto, cantidad, arr_notas
         )
 
         const validatePrev = await validatePrevBilling(id_abastecimiento);
@@ -166,19 +184,33 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
             <FloatingMenu formValues={formValues} setFormValues={setFormValues} state={formValues.numeroDocumento.length === 0} />
         </div>
         <div className="flex flex-col mt-5">
+
             <form onSubmit={handlerProcessBilling} autoComplete="off" className="flex flex-col">
                 <div className="grid grid-cols-2 gap-3">
-                    <NumeroDocumento formValues={formValues} setFormValues={setFormValues} />
-                    <Placa formValues={formValues} setFormValues={setFormValues} />
-                    <RazonSocial formValues={formValues} setFormValues={setFormValues} />
-                    <Direccion formValues={formValues} setFormValues={setFormValues} />
+                    {/* Pasamos 'disabled' a los inputs para bloquear edición manual si corresponde */}
+                    <NumeroDocumento formValues={formValues} setFormValues={setFormValues} isDisabled={isDisabled} />
+                    <Placa formValues={formValues} setFormValues={setFormValues} isDisabled={isDisabled} />
+                    <RazonSocial formValues={formValues} setFormValues={setFormValues} isDisabled={isDisabled} />
+                    <Direccion formValues={formValues} setFormValues={setFormValues} isDisabled={isDisabled} />
                     <TipoPago total={total} formValues={formValues} setFormValues={setFormValues} />
+                    
                     <div className="col-span-2">
-                        <button className={`${false ? "btn-disabled" : "btn-primary"} px-5 py-2 mt-3 w-full`} disabled={isProcessing}
-                        type="submit">
+                        <button 
+                            className={`${isProcessing ? "btn-disabled" : "btn-primary"} px-5 py-2 mt-3 w-full`} 
+                            disabled={isProcessing}
+                            type="submit"
+                        >
                             {isProcessing ? 'Procesando...' : 'Emitir comprobante'}
-                        </button>                        
+                        </button>
+                    {/* 3. MENSAJE VISUAL INFO: Informa al operario que los datos provienen de una Nota */}
+                    {isDisabled && (
+                        <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-xs font-medium">
+                            ⚠️ Facturación global activa: Los datos del cliente se han cargado automáticamente desde las notas de despacho consolidadas.
+                        </div>
+                    )}
+
                     </div>
+
                 </div>
             </form>
         </div>            
