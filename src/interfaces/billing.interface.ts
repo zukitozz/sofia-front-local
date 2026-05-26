@@ -5,7 +5,7 @@ export interface IBillingForm {
     razonSocial: string;
     placa: string;
     direccion: string;
-    efectivo: number;
-    tarjeta: number;
-    yape: number;
+    efectivo: number|string;
+    tarjeta: number|string;
+    yape: number|string;
 }

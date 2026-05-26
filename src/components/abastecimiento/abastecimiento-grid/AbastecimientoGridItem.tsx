@@ -20,9 +20,12 @@ export const AbastecimientoGridItem = ({ abastecimiento }: Props) => {
               <p className="text-sm text-gray-700 mb-1">
               Precio: S/ {abastecimiento.precioUnitario}
               </p>
-              <p className="text-sm text-gray-700 mb-4">
+              <p className="text-sm text-gray-700 mb-1">
               Cantidad: {abastecimiento.volTotal} {abastecimiento.medida}
-              </p>    
+              </p>
+              <p className="text-sm text-gray-700 mb-2">
+              Pistola: {abastecimiento.pistola}
+              </p>                 
           </div>
         </Link>
     </div>

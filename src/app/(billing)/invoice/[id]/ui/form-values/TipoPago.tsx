@@ -12,12 +12,27 @@ interface Props {
 export const TipoPago = ({ total, formValues, setFormValues }: Props) => {
 
     const handleChangeEfectivo = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const val = event.target.value;
+        if (val === '') {
+            setFormValues({ ...formValues, efectivo: '' });
+            return;
+        }
         setFormValues({ ...formValues, efectivo: +event.target.value });
     };
     const handleChangeTarjeta = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const val = event.target.value;
+        if (val === '') {
+            setFormValues({ ...formValues, tarjeta: '' });
+            return;
+        }
         setFormValues({ ...formValues, tarjeta: +event.target.value });
     };
     const handleChangeYape = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const val = event.target.value;
+        if (val === '') {
+            setFormValues({ ...formValues, yape: '' });
+            return;
+        }
         setFormValues({ ...formValues, yape: +event.target.value });
     };        
     const handleKeyDown = async (event: { key: string; preventDefault: () => void; }) => {

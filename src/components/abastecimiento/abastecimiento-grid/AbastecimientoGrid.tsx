@@ -1,40 +1,126 @@
 'use client';
-import { IAbastecimiento } from "@/interfaces"
-import { AbastecimientoGridItem } from "./AbastecimientoGridItem"
+import { useEffect, useRef, useState } from "react";
 import useSWR from 'swr';
-import { getAbastecimientos } from "@/actions";
-import { Constants } from "@/utils";
+import { useSession } from "next-auth/react";
+import { IAbastecimiento } from "@/interfaces";
+import { AbastecimientoGridItem } from "./AbastecimientoGridItem";
+import { getAbastecimientos, saveBilling, validatePrevBilling } from "@/actions";
+import { buildComprobanteFromAbastecimiento, Constants, notify } from "@/utils";
 import { useOrderAbastecimientoStore } from "@/store";
 
-interface Props{
-    pistolas: number[]
+interface Props {
+    pistolas: number[];
 }
 
 export const AbastecimientoGrid = ({ pistolas }: Props) => {
-  const removeAllProducts = useOrderAbastecimientoStore((state) => state.removeAllProducts);
-  removeAllProducts(); // Limpiar productos anteriores al cargar la página    
-    const { data } = useSWR<IAbastecimiento[]>(`${process.env.NEXT_PUBLIC_URL}/api/abastecimientos`, 
-        () => getAbastecimientos(pistolas, Constants.ESTADOS_ABASTECIMIENTO.PENDIENTE), { 
+    const { data: session } = useSession();
+    const removeAllProducts = useOrderAbastecimientoStore((state) => state.removeAllProducts);
+    const [filteredAbastecimientos, setFilteredAbastecimientos] = useState<IAbastecimiento[]>([]);
+    
+    // Lock en memoria para evitar que el polling de SWR duplique transacciones en vuelo
+    const idsProcesando = useRef<Set<number>>(new Set());
+
+    useEffect(() => {
+        removeAllProducts();
+    }, [removeAllProducts]);
+
+    const { data, mutate } = useSWR<IAbastecimiento[]>(
+        `${process.env.NEXT_PUBLIC_URL}/api/abastecimientos`,
+        () => getAbastecimientos(pistolas, Constants.ESTADOS_ABASTECIMIENTO.PENDIENTE), 
+        {
             refreshInterval: 2000,
             refreshWhenHidden: true,
             refreshWhenOffline: true,
             revalidateOnFocus: true,
         }
     );
-    return (
-        <>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-10 mb-10">
-            
-            {
-                data?.map( abastecimiento => (
-                    <AbastecimientoGridItem
-                        key={ abastecimiento.idAbastecimiento }
-                        abastecimiento={ abastecimiento }
-                    />
-                ) )
-            }
-        </div>            
-        </>
 
-    )
-}
+    useEffect(() => {
+        if (!data || data.length === 0) {
+            setFilteredAbastecimientos([]);
+            return;
+        }
+
+        // 1. Obtener el abastecimiento más RECIENTE de cada pistola para la UI
+        const mapaMangueras: { [pistolaId: number]: IAbastecimiento } = {};
+        data.forEach(abastecimiento => {
+            const pId = abastecimiento.pistola;
+            if (!mapaMangueras[pId] || abastecimiento.idAbastecimiento > mapaMangueras[pId].idAbastecimiento) {
+                mapaMangueras[pId] = abastecimiento;
+            }
+        });
+        setFilteredAbastecimientos(Object.values(mapaMangueras));
+
+        // 2. Lógica de AUTOBOLETEO condicionada por la Variable de Entorno
+        // Leemos el string del .env y lo convertimos a un booleano estricto
+        const isAutoboleteoEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTOBOLETEO === 'true';
+
+        if (!isAutoboleteoEnabled) {
+            console.log("Autoboleteo automático deshabilitado por variable de entorno.");
+            return; // Cortamos el flujo aquí si está en false
+        }
+
+        const procesarAutoboleteoAcumulado = async () => {
+            for (const abastecimiento of data) {
+                const pId = abastecimiento.pistola;
+                const ultimoAbastecimientoUI = mapaMangueras[pId];
+
+                // Condición: estado 0 y que no sea el registro activo en la UI
+                if (abastecimiento.estado === 0 && abastecimiento.idAbastecimiento !== ultimoAbastecimientoUI?.idAbastecimiento) {
+                    
+                    const idABoletear = abastecimiento.idAbastecimiento;
+
+                    if (idsProcesando.current.has(idABoletear)) continue;
+
+                    idsProcesando.current.add(idABoletear);
+
+                    try {
+                        await ejecutarAutoboleteo(abastecimiento);
+                    } catch (error) {
+                        console.error(`Fallo temporal en ID ${idABoletear}:`, error);
+                    } finally {
+                        idsProcesando.current.delete(idABoletear);
+                    }
+                }
+            }
+        };
+
+        procesarAutoboleteoAcumulado();
+    }, [data]);
+
+    const ejecutarAutoboleteo = async (abastecimientoViejo: IAbastecimiento) => {
+        const usuarioId = +(session?.user.id || 0);
+        const islaId = +(session?.user.islaId || 0);
+
+        const validatePrev = await validatePrevBilling(abastecimientoViejo.idAbastecimiento);
+        if (validatePrev.status) return;
+
+        const comprobanteObj = buildComprobanteFromAbastecimiento({
+            abastecimiento: abastecimientoViejo,
+            usuarioId,
+            islaId,
+            numeroDocumento: "0",
+            razonSocial: "PUBLICO EN GENERAL"
+        });
+
+        const { status, message } = await saveBilling(comprobanteObj.toPlainObject());
+
+        if (status) {
+            notify({ message: `Autoboleteo exitoso Manguera ${abastecimientoViejo.pistola}: ${message}`, type: 'success' });
+            mutate(); 
+        } else {
+            throw new Error(`Error devuelto por el servidor: ${message}`);
+        }
+    };
+
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-10 mb-10">
+            {filteredAbastecimientos.map(abastecimiento => (
+                <AbastecimientoGridItem
+                    key={abastecimiento.idAbastecimiento}
+                    abastecimiento={abastecimiento}
+                />
+            ))}
+        </div>
+    );
+};

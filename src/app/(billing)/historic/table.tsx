@@ -38,7 +38,7 @@ const getVisiblePages = (current: number, totalPages: number) => {
 
 export const HistoricosTable = ({ page, perPage }: TableProps) => {
     const { data: session } = useSession();
-    const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date()));   
+    const [date, setDate] = useState<string>(toLocaleOnlyDate(new Date(Date.now() - (5 * 60 * 60 * 1000))));   
     const [numeracion, setNumeracion] = useState<string>(''); 
     const [currentPage, setCurrentPage] = useState(1);
     const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {

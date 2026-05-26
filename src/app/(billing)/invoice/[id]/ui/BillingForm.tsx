@@ -157,7 +157,7 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
         const arr_notas: number[] = notas.map(nota => nota.id || 0);
 
         const comprobante = new Comprobante(
-            receptor, tipoComprobante, subTotal, totalIgv, total, tarjeta, efectivo, yape, ruc, UsuarioId, items, placa, 
+            receptor, tipoComprobante, subTotal, totalIgv, total, tarjeta==''?0: +tarjeta, efectivo==''?0: +efectivo, yape==''?0: +yape, ruc, UsuarioId, items, placa, 
             fecha_abastecimiento, tiempo_abastecimiento, IslaId, id_abastecimiento, pistola, codigo_producto, cantidad, arr_notas
         )
 
