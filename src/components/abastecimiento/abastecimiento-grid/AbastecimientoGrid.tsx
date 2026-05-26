@@ -49,15 +49,19 @@ export const AbastecimientoGrid = ({ pistolas }: Props) => {
                 mapaMangueras[pId] = abastecimiento;
             }
         });
-        setFilteredAbastecimientos(Object.values(mapaMangueras));
+
+        // NUEVO: Convertir a array y ORDENAR de menor a mayor por ID.
+        // Esto garantiza que el ID más alto (más reciente) se ubique al final (a la derecha)
+        const listaOrdenada = Object.values(mapaMangueras).sort((a, b) => a.idAbastecimiento - b.idAbastecimiento);
+        
+        setFilteredAbastecimientos(listaOrdenada);
 
         // 2. Lógica de AUTOBOLETEO condicionada por la Variable de Entorno
-        // Leemos el string del .env y lo convertimos a un booleano estricto
         const isAutoboleteoEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTOBOLETEO === 'true';
 
         if (!isAutoboleteoEnabled) {
             console.log("Autoboleteo automático deshabilitado por variable de entorno.");
-            return; // Cortamos el flujo aquí si está en false
+            return; 
         }
 
         const procesarAutoboleteoAcumulado = async () => {
