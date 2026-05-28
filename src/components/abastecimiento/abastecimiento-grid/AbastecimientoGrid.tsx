@@ -15,6 +15,7 @@ interface Props {
 export const AbastecimientoGrid = ({ pistolas }: Props) => {
     const { data: session } = useSession();
     const removeAllProducts = useOrderAbastecimientoStore((state) => state.removeAllProducts);
+    const unLockBilling = useOrderAbastecimientoStore((state) => state.unlockBilling);
     const [filteredAbastecimientos, setFilteredAbastecimientos] = useState<IAbastecimiento[]>([]);
     
     // Lock en memoria para evitar que el polling de SWR duplique transacciones en vuelo
@@ -22,6 +23,7 @@ export const AbastecimientoGrid = ({ pistolas }: Props) => {
 
     useEffect(() => {
         removeAllProducts();
+        unLockBilling();
     }, [removeAllProducts]);
 
     const { data, mutate } = useSWR<IAbastecimiento[]>(

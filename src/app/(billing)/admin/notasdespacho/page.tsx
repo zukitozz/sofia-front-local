@@ -13,6 +13,8 @@ const fetcher = () => obtieneNotasDespacho();
 export default function ConsolidacionDespachos () {
   const router = useRouter();
   const addNotaDespachoToOrder = useOrderAbastecimientoStore((state) => state.addNotaDespachoToOrder);
+  const lockBilling = useOrderAbastecimientoStore((state) => state.lockBilling);
+
   const { data, error, isLoading } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, (url: string) => fetcher());
   
   const [selectedNotas, setSelectedNotas] = useState<number[]>([]);
@@ -62,6 +64,7 @@ export default function ConsolidacionDespachos () {
       items: notasSeleccionadasData
     }
     addNotaDespachoToOrder(item);
+    lockBilling();
     router.push('/invoice/0');
     setDescripcion('');
   };

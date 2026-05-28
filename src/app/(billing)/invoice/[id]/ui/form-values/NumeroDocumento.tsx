@@ -9,16 +9,15 @@ import { IoPricetag } from 'react-icons/io5';
 interface Props {
     formValues: IBillingForm;
     setFormValues: (values: IBillingForm) => void;
-    isDisabled?: boolean;
 }
 
-export const NumeroDocumento = ({ formValues, setFormValues, isDisabled }: Props) => {
+export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
     
     const applyDiscountIfExists = useOrderAbastecimientoStore((state) => state.applyDiscountIfExists);
+    const lockBilling = useOrderAbastecimientoStore((state) => state.lockBilling);
+    const isBillingBlocked = useOrderAbastecimientoStore((state) => state.isBillingBlocked);
 
     const [hasDiscount, setHasDiscount] = useState(false);
-
-    const [disabled, setDisabled] = useState(false);
 
     const handleChangeNumeroDocumento = (event: React.ChangeEvent<HTMLInputElement>) => {
         setFormValues({ ...formValues, numeroDocumento: event.target.value });
@@ -33,24 +32,28 @@ export const NumeroDocumento = ({ formValues, setFormValues, isDisabled }: Props
                     notify({message: "Cargando datos del cliente", type:'success'})
                     setFormValues({ ...formValues, razonSocial: receptor.razon_social, direccion: receptor.direccion, placa: receptor.placa });
                     const { status } = await applyDiscountIfExists(formValues.numeroDocumento);
+                    if(status){
+                        notify({message: "Descuento aplicado", type:'success'});
+                    }
                     setHasDiscount(status);
+                    lockBilling();
                 }else{
                     const {hasErrorMiFact, razon_social, direccion} = await consultaRucMiFact(formValues.numeroDocumento);
                     if(!hasErrorMiFact && razon_social && direccion){
                         notify({message: "Cargando datos de SUNAT", type:'success'})
                         setFormValues({ ...formValues, razonSocial: razon_social, direccion: direccion });
+                        lockBilling();
                     }else{
                         notify({message: "Ruc no encontrado se realiza el registro", type:'success'})
                         setFormValues({ ...formValues, razonSocial: '', direccion: '', placa: '' });
                     } 
                     setHasDiscount(false)
                 }
-                setDisabled(true);
+                
             }else{
                 notify({message: "Número de documento no válido", type:'error'})
                 setFormValues({ ...formValues, razonSocial: '', direccion: '', placa: '' });
                 setHasDiscount(false);
-                setDisabled(false);
             }
 
         }
@@ -79,7 +82,7 @@ export const NumeroDocumento = ({ formValues, setFormValues, isDisabled }: Props
                 onChange={ handleChangeNumeroDocumento }
                 onKeyDown={ handleKeyNumeroDocumento }
                 autoComplete="off"
-                disabled={isDisabled || disabled}
+                disabled={isBillingBlocked}
             />
             {hasDiscount && (
                 <div className="flex items-center animate-bounce">

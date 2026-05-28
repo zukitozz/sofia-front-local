@@ -5,9 +5,11 @@ import { persist } from "zustand/middleware";
 import { getDescuentosByNumeroDocumento, getProductoPorCodigo } from '@/actions';
 
 interface State {
-    
-    notas:IComprobanteAdmin[];
     items: IOrderItem[];
+    notas:IComprobanteAdmin[];
+    isBillingBlocked: boolean;
+    lockBilling: () => void;
+    unlockBilling: () => void;
     getTotalItems: () => number;
     addAbastecimientoToOrder: (item: IAbastecimiento ) => void;
     updateProductQuantity: (product: IOrderItem, quantity: number) => void;
@@ -25,6 +27,9 @@ export const useOrderAbastecimientoStore = create<State>()(
         (set, get) => ({
             items: [],
             notas: [],
+            isBillingBlocked: false,
+            lockBilling: () => set({ isBillingBlocked: true }),
+            unlockBilling: () => set({ isBillingBlocked: false }),
             getTotalItems: () => {
                 const { items } = get();
                 let new_cantidad = 0;
@@ -159,15 +164,36 @@ export const useOrderAbastecimientoStore = create<State>()(
                 const { items } = get();
                 const updatedItems = items.map((item) => {
                     const descuento = descuentos.find(desc => desc.codigo_producto === item.codigo_producto);
-                    if(descuento && !item.descuento_aplicado){
+                    if (descuento && !item.descuento_aplicado) {
                         status = true;
                         const taxRate = Number.parseFloat(process.env.NEXT_PUBLIC_TAX || "0.18");
-                        const precioConDescuento = Math.round((item.precio - descuento.monto_descuento)*100)/100;
-                        const valorConDescuento = Math.round((precioConDescuento/(1 + taxRate))*10000000000)/10000000000;
-                        const igvConDescuento = Math.round((precioConDescuento - valorConDescuento)*100)/100;
-                        const valorUnitarioConDescuento = Math.round((item.valor_unitario - (descuento.monto_descuento/item.cantidad))*10000000000)/10000000000;
-                        const precioUnitarioConDescuento = Math.round((valorUnitarioConDescuento*(1 + taxRate))*10000000000)/10000000000;
-                        return { ...item, precio: precioConDescuento, valor: valorConDescuento, igv: igvConDescuento, valor_unitario: valorUnitarioConDescuento, precio_unitario: precioUnitarioConDescuento, descuento_aplicado: true };
+                        
+                        // 1. Identificar o calcular el descuento por galón (monto unitario)
+                        // Si tu descuento de la API ya viene por galón, usa directamente: descuento.monto_descuento
+                        // Si viene como un total global para el ítem, descomenta la línea de abajo:
+                        // const dsctoPorGalon = descuento.monto_descuento / item.cantidad;
+                        const dsctoPorGalon = descuento.monto_descuento; 
+
+                        // 2. Modificar a nivel UNITARIO (Precio por galón con IGV incluido)
+                        const nuevoPrecioUnitario = Math.round((item.precio_unitario - dsctoPorGalon) * 10000) / 10000;
+                        
+                        // 3. Desatar el Valor Unitario (Precio por galón sin IGV)
+                        const nuevoValorUnitario = Math.round((nuevoPrecioUnitario / (1 + taxRate)) * 1000000) / 1000000;
+
+                        // 4. Recalcular los TOTALES del ítem multiplicando por la cantidad de galones
+                        const nuevoPrecioTotal = Math.round((nuevoPrecioUnitario * item.cantidad) * 100) / 100;
+                        const nuevoValorTotal = Math.round((nuevoValorUnitario * item.cantidad) * 100) / 100;
+                        const nuevoIgvTotal = Math.round((nuevoPrecioTotal - nuevoValorTotal) * 100) / 100;
+
+                        return { 
+                            ...item, 
+                            precio_unitario: nuevoPrecioUnitario,
+                            valor_unitario: nuevoValorUnitario,
+                            precio: nuevoPrecioTotal,          // Total con IGV
+                            valor: nuevoValorTotal,            // Total sin IGV
+                            igv: nuevoIgvTotal,                // Impuesto total del item
+                            descuento_aplicado: true 
+                        };
                     }
                     return item;
                 });
