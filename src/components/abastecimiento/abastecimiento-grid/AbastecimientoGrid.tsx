@@ -43,6 +43,14 @@ export const AbastecimientoGrid = ({ pistolas }: Props) => {
             return;
         }
 
+        const isAutoboleteoEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTOBOLETEO === 'true';
+
+        if (!isAutoboleteoEnabled) {
+            console.log("Autoboleteo automático deshabilitado por variable de entorno.");
+            setFilteredAbastecimientos(data);
+            return; 
+        }        
+
         // 1. Obtener el abastecimiento más RECIENTE de cada pistola para la UI
         const mapaMangueras: { [pistolaId: number]: IAbastecimiento } = {};
         data.forEach(abastecimiento => {
@@ -59,12 +67,7 @@ export const AbastecimientoGrid = ({ pistolas }: Props) => {
         setFilteredAbastecimientos(listaOrdenada);
 
         // 2. Lógica de AUTOBOLETEO condicionada por la Variable de Entorno
-        const isAutoboleteoEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTOBOLETEO === 'true';
 
-        if (!isAutoboleteoEnabled) {
-            console.log("Autoboleteo automático deshabilitado por variable de entorno.");
-            return; 
-        }
 
         const procesarAutoboleteoAcumulado = async () => {
             for (const abastecimiento of data) {

@@ -45,7 +45,7 @@ export const ProductsInCart = () => {
                             <p>Precio: {currencyFormat(product.precio_unitario)}</p>
                             {
                                 !product.id_abastecimiento && (
-                                        product.medida === 'GLL'? (
+                                        product.medida === 'GLL'|| product.medida === 'LTR'? (
                                             <TotalSelector 
                                             total={ 0 } 
                                             onTotalChanged={ total => upgradeProductTotal(product, total) }
