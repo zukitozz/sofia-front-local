@@ -188,10 +188,10 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
             <form onSubmit={handlerProcessBilling} autoComplete="off" className="flex flex-col">
                 <div className="grid grid-cols-2 gap-3">
                     {/* Pasamos 'disabled' a los inputs para bloquear edición manual si corresponde */}
-                    <NumeroDocumento formValues={formValues} setFormValues={setFormValues} isDisabled={isDisabled} />
-                    <Placa formValues={formValues} setFormValues={setFormValues} isDisabled={isDisabled} />
-                    <RazonSocial formValues={formValues} setFormValues={setFormValues} isDisabled={isDisabled} />
-                    <Direccion formValues={formValues} setFormValues={setFormValues} isDisabled={isDisabled} />
+                    <NumeroDocumento formValues={formValues} setFormValues={setFormValues}/>
+                    <Placa formValues={formValues} setFormValues={setFormValues}/>
+                    <RazonSocial formValues={formValues} setFormValues={setFormValues}/>
+                    <Direccion formValues={formValues} setFormValues={setFormValues}/>
                     <TipoPago total={total} formValues={formValues} setFormValues={setFormValues} />
                     
                     <div className="col-span-2">
