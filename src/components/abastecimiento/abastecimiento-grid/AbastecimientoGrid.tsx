@@ -70,27 +70,38 @@ export const AbastecimientoGrid = ({ pistolas }: Props) => {
 
 
         const procesarAutoboleteoAcumulado = async () => {
-            for (const abastecimiento of data) {
+            // Filtrar primero los que realmente califican para autoboleteo
+            const pendientesDeBoleteo = data.filter(abastecimiento => {
                 const pId = abastecimiento.pistola;
                 const ultimoAbastecimientoUI = mapaMangueras[pId];
+                
+                return (
+                    abastecimiento.estado === 0 && 
+                    abastecimiento.idAbastecimiento !== ultimoAbastecimientoUI?.idAbastecimiento &&
+                    !idsProcesando.current.has(abastecimiento.idAbastecimiento)
+                );
+            });
 
-                // Condición: estado 0 y que no sea el registro activo en la UI
-                if (abastecimiento.estado === 0 && abastecimiento.idAbastecimiento !== ultimoAbastecimientoUI?.idAbastecimiento) {
-                    
-                    const idABoletear = abastecimiento.idAbastecimiento;
+            // Procesar uno por uno secuencialmente
+            for (const abastecimiento of pendientesDeBoleteo) {
+                const idABoletear = abastecimiento.idAbastecimiento;
 
-                    if (idsProcesando.current.has(idABoletear)) continue;
+                // Doble check por si acaso mutó en el intermedio del bucle
+                if (idsProcesando.current.has(idABoletear)) continue;
 
-                    idsProcesando.current.add(idABoletear);
+                // Bloquear INMEDIATAMENTE
+                idsProcesando.current.add(idABoletear);
 
-                    try {
-                        await ejecutarAutoboleteo(abastecimiento);
-                    } catch (error) {
-                        console.error(`Fallo temporal en ID ${idABoletear}:`, error);
-                    } finally {
-                        idsProcesando.current.delete(idABoletear);
-                    }
+                try {
+                    await ejecutarAutoboleteo(abastecimiento);
+                } catch (error) {
+                    console.error(`Fallo temporal en ID ${idABoletear}:`, error);
+                    // NOTA: Si falló, lo removemos para que el siguiente ciclo de SWR lo vuelva a intentar
+                    idsProcesando.current.delete(idABoletear);
                 }
+                // IMPORTANTE: No borres el ID de "idsProcesando" en el `finally` inmediatamente si fue exitoso.
+                // Déjalo ahí guardado para que los siguientes renders/polling de SWR (de los próximos segundos) 
+                // no lo vuelvan a intentar mientras la base de datos se actualiza.
             }
         };
 

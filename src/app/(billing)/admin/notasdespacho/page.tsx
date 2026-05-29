@@ -105,10 +105,11 @@ export default function ConsolidacionDespachos () {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-gray-600 uppercase tracking-wide">
+                <label htmlFor="descripcion" className="text-xs font-bold text-gray-600 uppercase tracking-wide">
                   Descripción del servicio / glosa <span className="text-red-500">*</span>
                 </label>
                 <textarea
+                  id="descripcion"
                   className={`w-full text-xs p-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-slate-50 transition-all ${
                     showError && !descripcion.trim() 
                       ? 'border-red-400 focus:ring-red-200 focus:bg-white' 
