@@ -13,7 +13,7 @@ export async function getHistoricos(page: number, perPage: number, fecha: string
 
     let filtroNumeracion = "";
     if (numeracionComprobante && numeracionComprobante.trim() !== "") {
-        filtroNumeracion = ` AND c.numeracion_comprobante = '${numeracionComprobante.trim()}'`;
+        filtroNumeracion = ` AND c.numeracion_comprobante = '${numeracionComprobante.trim()}' or r.numero_documento = '${numeracionComprobante.trim()}'`;
     }
 
     try {
@@ -24,6 +24,7 @@ export async function getHistoricos(page: number, perPage: number, fecha: string
                         FROM Comprobantes c
                         LEFT JOIN Cierreturnos t on c.CierreturnoId = t.id 
                         INNER JOIN Usuarios u on c.UsuarioId = u.id 
+                        INNER JOIN Receptores r on c.ReceptorId = r.id 
                         WHERE CAST(c.fecha_emision AS DATE) = '${fecha}' ${filtroNumeracion}
                         ) as Result WHERE RowNum BETWEEN ${start} AND ${end} order by fecha_hora desc;`
 

@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { saveBilling, saveCheckNc } from "@/actions";
 import { Constants, notify, toLocaleStorage } from "@/utils";
 import { IBillingForm, IComprobanteAdmin } from "@/interfaces";
@@ -12,7 +11,6 @@ interface Props {
 }
 
 export const BillingEditForm = ({ billing }: Props) => {
-    const router = useRouter();
     const { data: session } = useSession();
     const [isProcessing, setIsProcessing] = useState(false);
     
@@ -108,6 +106,7 @@ export const BillingEditForm = ({ billing }: Props) => {
         billing.fecha_abastecimiento = '';
         billing.numeracion_comprobante = "";
         billing.UsuarioId = UsuarioId;
+        billing.id_abastecimiento = null;
         billing.IslaId = IslaId;
         billing.impresion = 0;
         billing.enviado = 0;

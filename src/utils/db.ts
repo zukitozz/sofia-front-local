@@ -306,8 +306,7 @@ import { toLocaleStorage } from './formats';
                 sqlRequestLogins.input('fecha_fin', sql.NVarChar, toLocaleStorage(new Date()));
                 await sqlRequestLogins.query(`Update Logins set fecha_fin = @fecha_fin where UsuarioId = @UsuarioId and fecha_fin is null and jornada = @jornada`);
 
-                //await transaction.commit();
-                await transaction.rollback();
+                await transaction.commit();
 
                 return {
                     message: "Cierre realizado correctamente",
