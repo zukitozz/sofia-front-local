@@ -115,7 +115,6 @@ export const useOrderAbastecimientoStore = create<State>()(
                     medida: 'NIU',
                     img: ''
                 }
-                console.log('Despacho item a agregar:', despachoItem);
                 set({ items: [despachoItem], notas: items });
             },
             updateProductQuantity: (product: IOrderItem, quantity: number) => {

@@ -272,10 +272,14 @@ import { toLocaleStorage } from './formats';
                 //Insertar detalle cierre
                 const products_insert = productos.map(n => `(${cierreturnoId},${Object.values(n).map(v => `'${v}'`).join(", ")})`).join(', ')
 
+                
+
                 const sqlRequestCierreDetalle = new sql.Request(transaction);
-                await sqlRequestCierreDetalle.query(`INSERT INTO Cierreturnosdetalle (
-                    CierreturnoId,producto,medida,codigo,total_cantidad,calibracion_cantidad,despacho_cantidad,total_soles,calibracion_soles,despacho_soles 
-                ) VALUES ${products_insert}`);
+                const query_detalle = `INSERT INTO Cierreturnosdetalle (
+                    CierreturnoId,producto,medida,codigo,total_cantidad,despacho_cantidad,calibracion_cantidad,total_soles,despacho_soles, calibracion_soles  
+                ) VALUES ${products_insert}`
+                console.log(query_detalle)
+                await sqlRequestCierreDetalle.query(query_detalle);
 
                 //Actualizar abastecimientos
                 const sqlRequestComprobantes = new sql.Request(transaction);
@@ -302,7 +306,8 @@ import { toLocaleStorage } from './formats';
                 sqlRequestLogins.input('fecha_fin', sql.NVarChar, toLocaleStorage(new Date()));
                 await sqlRequestLogins.query(`Update Logins set fecha_fin = @fecha_fin where UsuarioId = @UsuarioId and fecha_fin is null and jornada = @jornada`);
 
-                await transaction.commit();
+                //await transaction.commit();
+                await transaction.rollback();
 
                 return {
                     message: "Cierre realizado correctamente",

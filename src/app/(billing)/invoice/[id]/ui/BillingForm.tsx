@@ -149,7 +149,7 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
         const order_abastecimiento = orders.find(item => item.id_abastecimiento !== null);
         const fecha_abastecimiento = order_abastecimiento?.fecha_abastecimiento ? new Date(order_abastecimiento.fecha_abastecimiento) : new Date();
         const tiempo_abastecimiento = order_abastecimiento?.tiempo_abastecimiento || 0;
-        const id_abastecimiento = order_abastecimiento?.id_abastecimiento || 1;
+        const id_abastecimiento = order_abastecimiento?.id_abastecimiento || null;
         const cantidad = order_abastecimiento?.cantidad || 0;
         const codigo_producto = order_abastecimiento?.codigo_producto || "";
         const pistola = order_abastecimiento?.pistola || 0;

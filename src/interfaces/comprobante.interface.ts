@@ -22,7 +22,7 @@ export interface IComprobanteAdmin {
     pdf?: string;
     url?: string;
     errors?: string;
-    id_abastecimiento: number;
+    id_abastecimiento: number| null;
     pistola?: number;
     inicio_medidor?: number;
     fin_medidor?: number;

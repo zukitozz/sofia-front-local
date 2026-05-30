@@ -68,7 +68,6 @@ export const AbastecimientoGrid = ({ pistolas }: Props) => {
 
         // 2. Lógica de AUTOBOLETEO condicionada por la Variable de Entorno
 
-
         const procesarAutoboleteoAcumulado = async () => {
             // Filtrar primero los que realmente califican para autoboleteo
             const pendientesDeBoleteo = data.filter(abastecimiento => {
