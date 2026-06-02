@@ -20,13 +20,14 @@ export const ReporteCierreTurnosProductos = () => {
         `${process.env.NEXT_PUBLIC_URL}/api-cierres`, 
         () => fetcher(date, isChecked)
     );
+    console.log("Data recibida:", data);
     // Cálculos de totales optimizados
     const totals = useMemo(() => {
         if (!Array.isArray(data)) return { sum_total: 0, sum_despacho: 0, sum_calibracion: 0 };
         return data.reduce((acc, curr) => ({
-            sum_total: acc.sum_total + curr.total_venta,
-            sum_despacho: acc.sum_despacho + curr.total_despacho,
-            sum_calibracion: acc.sum_calibracion + curr.total_calibracion
+            sum_total: acc.sum_total + curr.total_soles,
+            sum_despacho: acc.sum_despacho + curr.despacho_soles,
+            sum_calibracion: acc.sum_calibracion + curr.calibracion_soles
         }), { sum_total: 0, sum_despacho: 0, sum_calibracion: 0 });
     }, [data]);
 
@@ -103,9 +104,11 @@ export const ReporteCierreTurnosProductos = () => {
                         <tr>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Turno</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Producto</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Volumen</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cantidad Venta</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total Venta</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cantidad Despacho</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total Despacho</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cantidad Calibracion</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Total Calibracion</th>
                         </tr>
                     </thead>
@@ -114,10 +117,12 @@ export const ReporteCierreTurnosProductos = () => {
                             <tr key={item.producto} className="hover:bg-blue-50/50 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.turno}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.producto}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.volumen}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{currencyFormat(item.total_venta)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{currencyFormat(item.total_despacho)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{currencyFormat(item.total_calibracion)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.total_cantidad}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{currencyFormat(item.total_soles)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.despacho_cantidad}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{currencyFormat(item.despacho_soles)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.calibracion_cantidad}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{currencyFormat(item.calibracion_soles)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -128,7 +133,9 @@ export const ReporteCierreTurnosProductos = () => {
                             <td className="px-6 py-4 text-sm text-gray-900"></td>
                             <td className="px-6 py-4 text-sm text-gray-900"></td>
                             <td className="px-6 py-4 text-sm text-blue-700">{currencyFormat(totals.sum_total)}</td>
+                            <td className="px-6 py-4 text-sm text-gray-900"></td>
                             <td className="px-6 py-4 text-sm text-blue-700">{currencyFormat(totals.sum_despacho)}</td>
+                            <td className="px-6 py-4 text-sm text-gray-900"></td>
                             <td className="px-6 py-4 text-sm text-blue-700">{currencyFormat(totals.sum_calibracion)}</td>
                         </tr>
                     </tfoot>

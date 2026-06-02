@@ -37,8 +37,10 @@ export interface IReporteCierreTurno {
 export interface IReporteCierreTurnoProductos {
     turno: string;
     producto: string;
-    volumen: string;
-    total_venta: number;
-    total_despacho: number;
-    total_calibracion: number;
+    total_cantidad: number;
+    total_soles: number;
+    despacho_cantidad: number;
+    despacho_soles: number;
+    calibracion_cantidad: number;
+    calibracion_soles: number;
 }
