@@ -33,3 +33,12 @@ export interface IReporteCierreTurno {
     tarjeta: number;
     total: number;
 }
+
+export interface IReporteCierreTurnoProductos {
+    turno: string;
+    producto: string;
+    volumen: string;
+    total_venta: number;
+    total_despacho: number;
+    total_calibracion: number;
+}

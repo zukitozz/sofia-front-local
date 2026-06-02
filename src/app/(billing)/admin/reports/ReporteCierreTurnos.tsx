@@ -54,7 +54,7 @@ export const ReporteCierreTurnos = () => {
             {/* Encabezado y Controles */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-800">Reporte de Cierre Turnos</h2>
+                    <h2 className="text-xl font-bold text-gray-800">Reporte de Cierre Turnos/Usuarios</h2>
                     <p className="text-sm text-gray-500">Por usuario y tipo de pago</p>
                 </div>
 

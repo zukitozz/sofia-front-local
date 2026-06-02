@@ -1,6 +1,6 @@
 "use server";
 import { executeQuery } from '@/utils/db';
-import { IReporteCierrePorDia, IReporteCierreTurno, IReporteDeclaracionMensual } from "@/interfaces";
+import { IReporteCierrePorDia, IReporteCierreTurno, IReporteCierreTurnoProductos, IReporteDeclaracionMensual } from "@/interfaces";
 
 export async function obtieneReporteCierrePorDiaGalones(fecha: string, includeProducts: boolean): Promise<IReporteCierrePorDia[]> { 
     const query =     `
@@ -43,6 +43,21 @@ export async function obtieneReporteCierrePorDia(fecha: string): Promise<IReport
         where CAST(di.fecha AS DATE) = '${fecha}' order by t.fecha asc
         `;
     const cierres = await executeQuery<IReporteCierreTurno[]>(
+        process.env.DB_DATABASE_AUXILIAR||"", query
+    );    
+    return cierres;
+}
+
+export async function obtieneReporteCierreTurnosProductosPorDia(fecha: string, includeProducts: boolean): Promise<IReporteCierreTurnoProductos[]> { 
+    const query =     `
+        select t.turno, d.producto, sum(d.total_cantidad) as total_cantidad, sum(d.total_soles) as total_soles, sum(despacho_cantidad) as despacho_cantidad, sum(despacho_soles) as despacho_soles, sum(calibracion_cantidad) as calibracion_cantidad, sum(calibracion_soles) as calibracion_soles
+        from Cierreturnos t 
+        inner join Cierredias di on di.id=t.CierrediaId 
+        inner join Cierreturnosdetalle d on t.id = d.CierreturnoId 
+        where CAST(di.fecha AS DATE) = '${fecha}' ${includeProducts?"":"and d.medida = 'GLL' "}
+        group by d.producto, t.turno 
+        `;
+    const cierres = await executeQuery<IReporteCierreTurnoProductos[]>(
         process.env.DB_DATABASE_AUXILIAR||"", query
     );    
     return cierres;
