@@ -137,13 +137,17 @@ export const useOrderAbastecimientoStore = create<State>()(
                 const updatedItems = items.map((item) => {
                     if (item.codigo_producto === product.codigo_producto) {
                         const quantity = Math.round((total / item.precio_unitario)*1000)/1000;
-                        const precio = Math.round((item.precio_unitario * quantity)*100)/100;
-                        const valor = Math.round((item.valor_unitario * quantity)*10000000000)/10000000000;
+                        const precio = Math.round((total)*100)/100;
+                        const valor = Math.round((precio/(1 + Number.parseFloat(process.env.NEXT_PUBLIC_TAX || "0.18")))*10000000000)/10000000000;
+                        const valor_unitario = Math.round((valor/quantity)*10000000000)/10000000000;
                         const igv = Math.round((precio - valor)*100)/100;
+                        
+                        console.log(item)    
                         return { 
-                            ...item, precio, valor, igv, cantidad: quantity
+                            ...item, precio, valor, valor_unitario, igv, cantidad: quantity
                         };
                     }
+                    
                     return item;
                 });
                 set({ items: updatedItems });
