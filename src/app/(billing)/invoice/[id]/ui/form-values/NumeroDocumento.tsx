@@ -42,13 +42,13 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
                         notify({message: "Ruc no encontrado se realiza el registro", type:'success'})
                         setFormValues({ ...formValues, razonSocial: '', direccion: '', placa: '' });
                     } 
-                    const { status } = await applyDiscountIfExists(formValues.numeroDocumento);
-                    if(status){
-                        notify({message: "Descuento aplicado", type:'success'});
-                    }
-                    setHasDiscount(status);
-                    lockBilling();
                 }
+                const { status } = await applyDiscountIfExists(formValues.numeroDocumento);
+                if(status){
+                    notify({message: "Descuento aplicado", type:'success'});
+                }
+                setHasDiscount(status);
+                lockBilling();                
                 
             }else{
                 notify({message: "Número de documento no válido", type:'error'})
