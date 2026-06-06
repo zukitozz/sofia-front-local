@@ -10,12 +10,16 @@ interface TableResponseDescuentoProps {
 export async function getDescuentos(page: number, perPage: number, keyword?: string): Promise<TableResponseDescuentoProps> {
     const start = (page * perPage) - (perPage - 1);
     const end = (page * perPage);
+    let filtroAdicional = "";
+    if (keyword && keyword.trim() !== "") {
+        filtroAdicional = ` AND (cliente LIKE '%${keyword.trim()}%')`;
+    }    
     try {
         const products = await executeQuery<IDescuentoTable[]>(
             process.env.DB_DATABASE_AUXILIAR||"", 
             `select * from (
                         SELECT d.id,d.codigo_producto,d.numero_documento,d.monto_descuento,d.tipo,d.fecha,d.estado,r.razon_social as cliente, p.nombre as descripcion_producto, ROW_NUMBER() OVER (ORDER BY d.id) AS RowNum FROM Descuentos d INNER JOIN Receptores r on d.numero_documento = r.numero_documento INNER JOIN Productos p on d.codigo_producto = p.codigo 
-                        ) as Result WHERE RowNum BETWEEN ${start} AND ${end} ;`
+                        ) as Result WHERE RowNum BETWEEN ${start} AND ${end} ${filtroAdicional} ;`
         );
         
 

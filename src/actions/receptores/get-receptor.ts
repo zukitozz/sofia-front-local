@@ -10,12 +10,19 @@ interface TableResponseReceptoresProps {
 export async function getReceptores(page: number, perPage: number, keyword?: string): Promise<TableResponseReceptoresProps> {
     const start = (page * perPage) - (perPage - 1);
     const end = (page * perPage);
+
+    let filtroAdicional = "";
+    if (keyword && keyword.trim() !== "") {
+        filtroAdicional = ` AND (numero_documento LIKE '%${keyword.trim()}%' OR razon_social LIKE '%${keyword.trim()}%')`;
+    }
+    const query = `select * from (
+                        SELECT id,numero_documento,tipo_documento,razon_social,direccion,correo,placa, ROW_NUMBER() OVER (ORDER BY id) AS RowNum FROM Receptores 
+                        ) as Result WHERE RowNum BETWEEN ${start} AND ${end} ${filtroAdicional} ;`
+    console.log("Query getReceptores:", query);
     try {
         const receptores = await executeQuery<IReceptor[]>(
-            process.env.DB_DATABASE_AUXILIAR||"", 
-            `select * from (
-                        SELECT id,numero_documento,tipo_documento,razon_social,direccion,correo,placa, ROW_NUMBER() OVER (ORDER BY id) AS RowNum FROM Receptores 
-                        ) as Result WHERE RowNum BETWEEN ${start} AND ${end} ;`
+            process.env.DB_DATABASE_AUXILIAR||"", query
+            
         );
         
 
