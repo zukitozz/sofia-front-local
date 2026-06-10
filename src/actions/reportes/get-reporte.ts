@@ -3,6 +3,9 @@ import { executeQuery } from '@/utils/db';
 import { IReporteCierrePorDia, IReporteCierreTurno, IReporteCierreTurnoProductos, IReporteDeclaracionMensual } from "@/interfaces";
 
 export async function obtieneReporteCierrePorDiaGalones(fecha: string, includeProducts: boolean): Promise<IReporteCierrePorDia[]> { 
+    const date: Date = new Date(fecha);
+    date.setDate(date.getDate() + Number.parseInt(process.env.NEXT_PUBLIC_CIERRE_DIA || "0"));
+    const nextDayString: string = date.toISOString().split('T')[0];    
     const query =     `
             select ctd.codigo,ctd.producto,
             SUM(ctd.total_cantidad) + SUM(ctd.calibracion_cantidad) + SUM(ctd.despacho_cantidad) as cantidad,
@@ -10,7 +13,7 @@ export async function obtieneReporteCierrePorDiaGalones(fecha: string, includePr
             from Cierreturnos t 
             inner join Cierredias d on t.CierrediaId = d.id 
             inner join Cierreturnosdetalle ctd on t.id = ctd.CierreturnoId 
-            where CAST(d.fecha AS DATE) = '${fecha}' ${includeProducts?"":"and ctd.medida = 'GLL' "}
+            where CAST(d.fecha AS DATE) = '${nextDayString}' ${includeProducts?"":"and ctd.medida = 'GLL' "}
             group by ctd.codigo, ctd.producto
         `;
     const cierres = await executeQuery<IReporteCierrePorDia[]>(
@@ -35,13 +38,17 @@ export async function obtieneReporteDeclaracionMensual(fecha: string): Promise<I
 }
 
 export async function obtieneReporteCierrePorDia(fecha: string): Promise<IReporteCierreTurno[]> { 
+    const date: Date = new Date(fecha);
+    date.setDate(date.getDate() + Number.parseInt(process.env.NEXT_PUBLIC_CIERRE_DIA || "0"));
+    const nextDayString: string = date.toISOString().split('T')[0];
     const query =     `
         select t.turno, t.fecha, u.nombre,t.efectivo, t.tarjeta, t.yape, t.total
         from Cierreturnos t 
         inner join Cierredias di on di.id=t.CierrediaId 
         inner join Usuarios u on t.UsuarioId = u.id 
-        where CAST(di.fecha AS DATE) = '${fecha}' order by t.fecha asc
+        where CAST(di.fecha AS DATE) = '${nextDayString}' order by t.fecha asc
         `;
+    console.log("Ejecutando consulta SQL:", query);
     const cierres = await executeQuery<IReporteCierreTurno[]>(
         process.env.DB_DATABASE_AUXILIAR||"", query
     );    
@@ -49,12 +56,15 @@ export async function obtieneReporteCierrePorDia(fecha: string): Promise<IReport
 }
 
 export async function obtieneReporteCierreTurnosProductosPorDia(fecha: string, includeProducts: boolean): Promise<IReporteCierreTurnoProductos[]> { 
+    const date: Date = new Date(fecha);
+    date.setDate(date.getDate() + Number.parseInt(process.env.NEXT_PUBLIC_CIERRE_DIA || "0"));
+    const nextDayString: string = date.toISOString().split('T')[0];    
     const query =     `
         select t.turno, d.producto, sum(d.total_cantidad) as total_cantidad, sum(d.total_soles) as total_soles, sum(despacho_cantidad) as despacho_cantidad, sum(despacho_soles) as despacho_soles, sum(calibracion_cantidad) as calibracion_cantidad, sum(calibracion_soles) as calibracion_soles
         from Cierreturnos t 
         inner join Cierredias di on di.id=t.CierrediaId 
         inner join Cierreturnosdetalle d on t.id = d.CierreturnoId 
-        where CAST(di.fecha AS DATE) = '${fecha}' ${includeProducts?"":"and d.medida = 'GLL' "}
+        where CAST(di.fecha AS DATE) = '${nextDayString}' ${includeProducts?"":"and d.medida = 'GLL' "}
         group by d.producto, t.turno 
         `;
     const cierres = await executeQuery<IReporteCierreTurnoProductos[]>(

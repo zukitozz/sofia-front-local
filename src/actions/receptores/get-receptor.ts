@@ -18,7 +18,7 @@ export async function getReceptores(page: number, perPage: number, keyword?: str
     const query = `select * from (
                         SELECT id,numero_documento,tipo_documento,razon_social,direccion,correo,placa, ROW_NUMBER() OVER (ORDER BY id) AS RowNum FROM Receptores 
                         ) as Result WHERE RowNum BETWEEN ${start} AND ${end} ${filtroAdicional} ;`
-    console.log("Query getReceptores:", query);
+    
     try {
         const receptores = await executeQuery<IReceptor[]>(
             process.env.DB_DATABASE_AUXILIAR||"", query

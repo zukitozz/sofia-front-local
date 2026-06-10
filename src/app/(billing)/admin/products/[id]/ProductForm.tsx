@@ -188,7 +188,6 @@ return (
                 allowedContent: "Imágenes de hasta 4MB",
               }}
               onClientUploadComplete={(res) => {
-                console.log("Files: ", res);
                 // Tip Senior: Aquí deberías actualizar tu estado dinámico para guardar la URL en el formulario
                 if (res && res[0]) {
                   setFormValues({

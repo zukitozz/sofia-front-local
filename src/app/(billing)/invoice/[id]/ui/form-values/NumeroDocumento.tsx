@@ -29,11 +29,9 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
             if(formValues.tipoDocumento){
                 const receptor = await getReceptorByDocumento(formValues.numeroDocumento);
                 if(receptor){
-                    console.log("Receptor encontrado para el documento", formValues.numeroDocumento, receptor);
                     notify({message: "Cargando datos del cliente", type:'success'})
                     setFormValues({ ...formValues, razonSocial: receptor.razon_social, direccion: receptor.direccion, placa: receptor.placa });
                 }else{
-                    console.log("No se encontró receptor para el documento, consultando RUC en MiFact", formValues.numeroDocumento);
                     const {hasErrorMiFact, razon_social, direccion} = await consultaRucMiFact(formValues.numeroDocumento);
                     if(!hasErrorMiFact && razon_social && direccion){
                         notify({message: "Cargando datos de SUNAT", type:'success'})

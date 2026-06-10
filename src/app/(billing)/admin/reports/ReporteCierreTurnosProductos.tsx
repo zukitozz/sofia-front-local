@@ -20,7 +20,7 @@ export const ReporteCierreTurnosProductos = () => {
         `${process.env.NEXT_PUBLIC_URL}/api-cierres`, 
         () => fetcher(date, isChecked)
     );
-    console.log("Data recibida:", data);
+    
     // Cálculos de totales optimizados
     const totals = useMemo(() => {
         if (!Array.isArray(data)) return { sum_total: 0, sum_despacho: 0, sum_calibracion: 0 };

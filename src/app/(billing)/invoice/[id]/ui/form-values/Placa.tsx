@@ -26,7 +26,6 @@ export const Placa = ({ formValues, setFormValues }: Props) => {
         const value = event.target.value;
         setFormValues({ ...formValues, placa: value.toLocaleUpperCase() });
         if (hasDiscount) setHasDiscount(false);
-        console.log(isBillingBlocked)
         if(isBillingBlocked) return;
         if(value.length > 2){
             const allSuggestions = await getPlacas(value);

@@ -278,7 +278,7 @@ import { toLocaleStorage } from './formats';
                 const query_detalle = `INSERT INTO Cierreturnosdetalle (
                     CierreturnoId,producto,medida,codigo,total_cantidad,despacho_cantidad,calibracion_cantidad,total_soles,despacho_soles, calibracion_soles  
                 ) VALUES ${products_insert}`
-                console.log(query_detalle)
+
                 await sqlRequestCierreDetalle.query(query_detalle);
 
                 //Actualizar abastecimientos

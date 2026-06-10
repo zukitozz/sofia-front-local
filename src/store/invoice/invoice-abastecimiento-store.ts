@@ -141,8 +141,7 @@ export const useOrderAbastecimientoStore = create<State>()(
                         const valor = Math.round((precio/(1 + Number.parseFloat(process.env.NEXT_PUBLIC_TAX || "0.18")))*10000000000)/10000000000;
                         const valor_unitario = Math.round((valor/quantity)*10000000000)/10000000000;
                         const igv = Math.round((precio - valor)*100)/100;
-                        
-                        console.log(item)    
+ 
                         return { 
                             ...item, precio, valor, valor_unitario, igv, cantidad: quantity
                         };

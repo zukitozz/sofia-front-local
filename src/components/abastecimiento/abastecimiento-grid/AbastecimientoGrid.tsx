@@ -46,7 +46,6 @@ export const AbastecimientoGrid = ({ pistolas }: Props) => {
         const isAutoboleteoEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTOBOLETEO === 'true';
 
         if (!isAutoboleteoEnabled) {
-            console.log("Autoboleteo automático deshabilitado por variable de entorno.");
             setFilteredAbastecimientos(data);
             return; 
         }        
