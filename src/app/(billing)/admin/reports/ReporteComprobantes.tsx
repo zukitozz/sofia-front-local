@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import useSWR from 'swr';
 import * as XLSX from 'xlsx';
+import Link from 'next/link';
 import { IoDownloadOutline, IoCalendarOutline } from "react-icons/io5";
 import { currencyFormat, toLocaleOnlyDate, toLocaleShow } from "@/utils";
 import { obtieneReporteComprobantes } from "@/actions/reportes/get-reporte";
@@ -202,7 +203,13 @@ export const ReporteComprobantes = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.comprobante}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">{item.receptor}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.usuario}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            {item.url && item.url != 'null' && (
+                                                <Link href={item.url||"#"} target="_blank" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">PDF</Link>
+                                            )}                                            
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900">{currencyFormat(item.total)}</td>
+
                                     </tr>
                                 ))
                             ) : (
@@ -217,7 +224,7 @@ export const ReporteComprobantes = () => {
                         {data && data.length > 0 && (
                             <tfoot className="bg-gray-100 font-bold border-t-2 border-gray-300">
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-4 text-sm text-gray-900 uppercase">Total General</td>
+                                    <td colSpan={5} className="px-6 py-4 text-sm text-gray-900 uppercase">Total General</td>
                                     <td className="px-6 py-4 text-sm text-right text-blue-700">{currencyFormat(totalGeneral)}</td>
                                 </tr>
                             </tfoot>

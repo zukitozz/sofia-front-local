@@ -99,7 +99,7 @@ export async function obtieneReporteComprobantes({ boletas, factura, notasCredit
         where += ` and (${conditions.slice(0, -4)})`; // Eliminar el último " OR "
     }
     const query = `
-        select TOP 100 c.id as id, numeracion_comprobante as comprobante, c.fecha_emision as fecha, fecha_abastecimiento as fechahora, r.numero_documento, r.razon_social as receptor, c.placa, c.dec_combustible, c.total  as total, u.nombre as usuario 
+        select TOP 100 c.id as id, numeracion_comprobante as comprobante, c.fecha_hora as fecha, fecha_abastecimiento as fechahora, r.numero_documento, r.razon_social as receptor, c.placa, c.dec_combustible, c.total  as total, u.nombre as usuario, c.url  
         from Comprobantes c  
         inner join Receptores r on c.ReceptorId = r.id 
         inner join Usuarios u on c.UsuarioId = u.id

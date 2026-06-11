@@ -51,5 +51,6 @@ export interface IReporteComprobantes {
     comprobante: string;
     receptor: string;
     usuario: string;
+    url: string;
     total: number;
 }
