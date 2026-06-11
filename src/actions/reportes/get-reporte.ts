@@ -1,6 +1,6 @@
 "use server";
 import { executeQuery } from '@/utils/db';
-import { IReporteCierrePorDia, IReporteCierreTurno, IReporteCierreTurnoProductos, IReporteDeclaracionMensual } from "@/interfaces";
+import { IReporteCierrePorDia, IReporteCierreTurno, IReporteCierreTurnoProductos, IReporteComprobantes, IReporteDeclaracionMensual } from "@/interfaces";
 
 export async function obtieneReporteCierrePorDiaGalones(fecha: string, includeProducts: boolean): Promise<IReporteCierrePorDia[]> { 
     const date: Date = new Date(fecha);
@@ -71,4 +71,43 @@ export async function obtieneReporteCierreTurnosProductosPorDia(fecha: string, i
         process.env.DB_DATABASE_AUXILIAR||"", query
     );    
     return cierres;
+}
+interface IParametrosReporteComprobantes {
+    boletas: boolean;
+    factura: boolean;
+    notasCredito: boolean;
+    notasDespacho: boolean;
+    calibracion: boolean;
+    fechaInicio: string;
+    fechaFin: string;
+    usuario: string;
+    ruc: string;
+}
+export async function obtieneReporteComprobantes({ boletas, factura, notasCredito, notasDespacho, calibracion, fechaInicio, fechaFin, usuario, ruc }: IParametrosReporteComprobantes): Promise<IReporteComprobantes[]> { 
+    let conditions = '';
+    let where = 'where 1=1';
+    if(fechaInicio) where += ` and c.fecha_emision >= '${fechaInicio}'`;
+    if(fechaFin) where += ` and c.fecha_emision <= '${fechaFin}'`;
+    if(usuario) where += ` and c.UsuarioId = '${usuario}'`;
+    if(ruc) where += ` and r.numero_documento = '${ruc}'`;
+    if(boletas || factura || notasCredito || notasDespacho || calibracion){
+        if(boletas) conditions += `c.tipo_comprobante = '03' OR `;
+        if(factura) conditions += `c.tipo_comprobante = '01' OR `;
+        if(notasCredito) conditions += `c.tipo_comprobante = '07' OR `;
+        if(notasDespacho) conditions += `c.tipo_comprobante = '08' OR `;
+        if(calibracion) conditions += `c.tipo_comprobante = '09' OR `;
+        where += ` and (${conditions.slice(0, -4)})`; // Eliminar el último " OR "
+    }
+    const query = `
+        select TOP 100 c.id as id, numeracion_comprobante as comprobante, c.fecha_emision as fecha, fecha_abastecimiento as fechahora, r.numero_documento, r.razon_social as receptor, c.placa, c.dec_combustible, c.total  as total, u.nombre as usuario 
+        from Comprobantes c  
+        inner join Receptores r on c.ReceptorId = r.id 
+        inner join Usuarios u on c.UsuarioId = u.id
+        ${where} order by c.id desc
+        `;
+    console.log("Ejecutando consulta SQL:", query);
+    const comprobantes = await executeQuery<IReporteComprobantes[]>(
+        process.env.DB_DATABASE_AUXILIAR||"", query
+    );    
+    return comprobantes;
 }

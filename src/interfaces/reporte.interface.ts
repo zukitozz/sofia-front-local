@@ -44,3 +44,12 @@ export interface IReporteCierreTurnoProductos {
     calibracion_cantidad: number;
     calibracion_soles: number;
 }
+
+export interface IReporteComprobantes {
+    id: number;
+    fecha: string;
+    comprobante: string;
+    receptor: string;
+    usuario: string;
+    total: number;
+}
