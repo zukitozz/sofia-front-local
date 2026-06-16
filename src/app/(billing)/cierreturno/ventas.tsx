@@ -58,9 +58,12 @@ export const CierreVentas = () => {
             }else{
                 notify({message, type: 'error'})
             }
-        }finally{
+        } catch (err: any) {
+            const msg = err?.message || 'Error crítico al cerrar turno';
+            notify({ message: msg, type: 'error' });
+        } finally {
             setIsProcessing(false);
-            logout();
+            await logout();
         }
     };
 

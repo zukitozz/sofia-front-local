@@ -48,7 +48,6 @@ export async function obtieneReporteCierrePorDia(fecha: string): Promise<IReport
         inner join Usuarios u on t.UsuarioId = u.id 
         where CAST(di.fecha AS DATE) = '${nextDayString}' order by t.fecha asc
         `;
-    console.log("Ejecutando consulta SQL:", query);
     const cierres = await executeQuery<IReporteCierreTurno[]>(
         process.env.DB_DATABASE_AUXILIAR||"", query
     );    
@@ -105,7 +104,6 @@ export async function obtieneReporteComprobantes({ boletas, factura, notasCredit
         inner join Usuarios u on c.UsuarioId = u.id
         ${where} order by c.id desc
         `;
-    console.log("Ejecutando consulta SQL:", query);
     const comprobantes = await executeQuery<IReporteComprobantes[]>(
         process.env.DB_DATABASE_AUXILIAR||"", query
     );    

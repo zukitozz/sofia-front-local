@@ -1,22 +1,40 @@
 'use client';
 import useSWR from 'swr';
 
-import { obtieneHistoricoCierres } from '@/actions/cierreturno'
+import { obtieneHistoricoCierres, reprintCierre } from '@/actions/cierreturno'
 import { useSession } from "next-auth/react";
 import { ICierreTurno } from '@/interfaces/cierreturno.interface';
 import { currencyFormat, toLocaleShow } from '@/utils/formats';
 import { ResumenTable } from '../../../components/cierres/ResumeTable';
+import { useState } from 'react';
+import { notify } from '@/utils/notify';
 
 const fetcher = (usuarioId: string) => obtieneHistoricoCierres(usuarioId);
 
 export const Historico = () => {
     const { data: session } = useSession();
-    const usuarioId = session?.user?.id ? session.user.id : "";
+    const usuarioId = session?.user?.id || "";
+    const [isProcessing, setIsProcessing] = useState(false);
+
     const { data, error, isLoading, isValidating } = useSWR(`${process.env.NEXT_PUBLIC_URL}/api`, () => fetcher(usuarioId));
 
     if(!data || isLoading || isValidating || error || !Array.isArray(data)){
         return (<div className="animate-spin rounded-full h-8 w-8 justify-center border-gray-900 border-b-2 align-middle"></div>);
     }
+
+    const handlerReprintCierre = async (id: number) => {
+        setIsProcessing(true);
+        try{
+            const { message, status } = await reprintCierre(session)
+            if(status){          
+                notify({message})
+            }else{
+                notify({message, type: 'error'})
+            }
+        }finally{
+            setIsProcessing(false);
+        }
+    };    
 
     return (
         <div className="bg-white rounded-xl shadow-xl p-7 col-span-3">
@@ -111,8 +129,15 @@ export const Historico = () => {
                                         <tr><td className="text-left">TARJETA</td><td className="text-right">{currencyFormat(cierre.tarjeta)}</td></tr>
                                         <tr><td className="text-left">YAPE</td><td className="text-right">{currencyFormat(cierre.yape)}</td></tr>
                                     </ResumenTable>                                 
-                                }                            
+                                }
+                                <button 
+                                    className="btn-primary px-5 py-3 mt-4 w-full text-lg shadow-lg active:scale-95 transition-transform"
+                                    onClick={() => handlerReprintCierre(cierre.id)} disabled={isProcessing}
+                                >
+                                    Reimprimir Cierre
+                                </button>                                 
                             </div>
+                            
                         );
                     })
                 }
