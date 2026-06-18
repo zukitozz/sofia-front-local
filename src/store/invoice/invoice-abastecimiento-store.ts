@@ -49,8 +49,9 @@ export const useOrderAbastecimientoStore = create<State>()(
                 set({ items: [], notas: [] });
                 const producto = await getProductoPorCodigo(codigoCombustible.toString());
                 const taxRate = Number.parseFloat(process.env.NEXT_PUBLIC_TAX || "0.18");
+                const recalculateCantidad = process.env.NEXT_PUBLIC_RECALCULATE_CANTIDAD === 'true';
                 const orderItem: IOrderItem = {
-                    cantidad: volTotal,
+                    cantidad: recalculateCantidad? Math.round((valorTotal/precioUnitario)*1000)/1000 : volTotal,
                     precio: valorTotal,
                     valor: Math.round((valorTotal/(1 + taxRate))*10000000000)/10000000000,
                     igv: Math.round((valorTotal - valorTotal/(1 + taxRate))*100)/100,
