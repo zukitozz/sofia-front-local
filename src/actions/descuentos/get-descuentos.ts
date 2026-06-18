@@ -10,23 +10,36 @@ interface TableResponseDescuentoProps {
 export async function getDescuentos(page: number, perPage: number, keyword?: string): Promise<TableResponseDescuentoProps> {
     const start = (page * perPage) - (perPage - 1);
     const end = (page * perPage);
-    let filtroAdicional = "";
+
+    let innerFilter = "";
     if (keyword && keyword.trim() !== "") {
-        filtroAdicional = ` AND (cliente LIKE '%${keyword.trim()}%')`;
-    }    
+        const cleanKeyword = keyword.trim().replace(/'/g, "''"); // Evita roturas básicas por comillas singulares
+        innerFilter = ` WHERE (d.numero_documento LIKE '%${cleanKeyword}%' OR r.razon_social LIKE '%${cleanKeyword}%')`;
+    }   
+
+    const query = `select * from (
+                SELECT d.id,d.codigo_producto,d.numero_documento as documento,d.monto_descuento,d.tipo,d.fecha,d.estado,r.razon_social as cliente, p.nombre as descripcion_producto, 
+                ROW_NUMBER() OVER (ORDER BY d.id) AS RowNum 
+                FROM Descuentos d INNER JOIN Receptores r on d.numero_documento = r.numero_documento 
+                INNER JOIN Productos p on d.codigo_producto = p.codigo 
+                ${innerFilter}
+            ) as Result 
+            WHERE RowNum BETWEEN ${start} AND ${end};`
     try {
-        const products = await executeQuery<IDescuentoTable[]>(
-            process.env.DB_DATABASE_AUXILIAR||"", 
-            `select * from (
-                        SELECT d.id,d.codigo_producto,d.numero_documento,d.monto_descuento,d.tipo,d.fecha,d.estado,r.razon_social as cliente, p.nombre as descripcion_producto, ROW_NUMBER() OVER (ORDER BY d.id) AS RowNum FROM Descuentos d INNER JOIN Receptores r on d.numero_documento = r.numero_documento INNER JOIN Productos p on d.codigo_producto = p.codigo 
-                        ) as Result WHERE RowNum BETWEEN ${start} AND ${end} ${filtroAdicional} ;`
-        );
+
+        const dbName = process.env.DB_DATABASE_AUXILIAR || "";
+
+        const products = await executeQuery<IDescuentoTable[]>(dbName,query);
         
 
         const total = await executeQuery<[]>(
-            process.env.DB_DATABASE_AUXILIAR||"", 
-            `SELECT d.id FROM Descuentos d INNER JOIN Receptores r on d.numero_documento = r.numero_documento INNER JOIN Productos p on d.codigo_producto = p.codigo`
-        );        
+                dbName, 
+                `SELECT d.id 
+                FROM Descuentos d 
+                INNER JOIN Receptores r on d.numero_documento = r.numero_documento 
+                INNER JOIN Productos p on d.codigo_producto = p.codigo
+                ${innerFilter}
+            `);        
         const pageNumbers = [];
         for (let i = 1; i <= Math.ceil(total.length / perPage); i++) {
             pageNumbers.push(i);

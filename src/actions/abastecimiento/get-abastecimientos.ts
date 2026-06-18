@@ -2,23 +2,47 @@
 import { EstadosAbastecimiento, IAbastecimiento } from '@/interfaces';
 import { executeQuery } from '@/utils/db';
 
-
 export async function getAbastecimientos(pistolas: number[], estado?: EstadosAbastecimiento): Promise<IAbastecimiento[]> {
     try {
-     const abastecimientos = await executeQuery<IAbastecimiento[]>(
-        process.env.DB_DATABASE_AUXILIAR||"", 
-        `SELECT 
-            a.idAbastecimiento, a.registro, a.pistola, a.codigoCombustible, a.numeroTanque, a.valorTotal, a.volTotal, a.precioUnitario, 
-            a.tiempo, a.fechaHora, a.totInicio, a.totFinal, a.IDoperador, a.IDcliente, a.volTanque, a.estado, 
-            p.nombre, p.color, p.medida  
-        FROM 
-        DEMOSQL.dbo.Abastecimientos a 
-        INNER JOIN Productos p ON a.codigoCombustible = p.codigo${ estado !== undefined ? ' WHERE a.valorTotal > 0 and a.estado = ' + estado : ''} 
-        and a.pistola in (${pistolas.join(", ")}) 
-        ORDER BY a.idAbastecimiento desc
-        `
-    );
-     return abastecimientos;
+        // 1. Crear un array para almacenar las condiciones del filtro dinámico
+        const condiciones: string[] = [];
+
+        // Filtro por estado (mantenemos tu lógica de valorTotal > 0 cuando hay estado)
+        if (estado !== undefined) {
+            condiciones.push(`a.valorTotal > 0 AND a.estado = ${estado}`);
+        }
+
+        // 2. Filtro por pistolas: SOLO se agrega si el array contiene elementos
+        if (pistolas && pistolas.length > 0) {
+            // Validamos que sean números para evitar sorpresas antes de unirlos
+            const listaPistolas = pistolas.join(", ");
+            condiciones.push(`a.pistola IN (${listaPistolas})`);
+        }
+
+        // 3. Armar la cláusula WHERE dinámicamente si hay condiciones en el array
+        const clausulaWhere = condiciones.length > 0 ? `WHERE ${condiciones.join(" AND ")}` : "";
+
+        // 4. Construir la query final de forma mucho más legible
+        const query = `
+            SELECT 
+                a.idAbastecimiento, a.registro, a.pistola, a.codigoCombustible, a.numeroTanque, a.valorTotal, a.volTotal, a.precioUnitario, 
+                a.tiempo, a.fechaHora, a.totInicio, a.totFinal, a.IDoperador, a.IDcliente, a.volTanque, a.estado, 
+                p.nombre, p.color, p.medida  
+            FROM 
+                DEMOSQL.dbo.Abastecimientos a 
+            INNER JOIN 
+                Productos p ON a.codigoCombustible = p.codigo
+            ${clausulaWhere} 
+            ORDER BY 
+                a.idAbastecimiento DESC
+        `;
+
+        const abastecimientos = await executeQuery<IAbastecimiento[]>(
+            process.env.DB_DATABASE_AUXILIAR || "", 
+            query
+        );
+
+        return abastecimientos;
     } catch (error) {
         console.error("Error fetching getAbastecimientos:");
         console.error(JSON.stringify(error));

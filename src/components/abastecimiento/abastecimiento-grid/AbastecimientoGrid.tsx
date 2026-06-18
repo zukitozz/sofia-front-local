@@ -17,6 +17,7 @@ export const AbastecimientoGrid = ({ pistolas }: Props) => {
     const removeAllProducts = useOrderAbastecimientoStore((state) => state.removeAllProducts);
     const unLockBilling = useOrderAbastecimientoStore((state) => state.unlockBilling);
     const [filteredAbastecimientos, setFilteredAbastecimientos] = useState<IAbastecimiento[]>([]);
+    const filtroPistolas = process.env.NEXT_PUBLIC_ENABLE_BILLING_IN_ALL === 'true' ? [] : pistolas;
     
     // Lock en memoria para evitar que el polling de SWR duplique transacciones en vuelo
     const idsProcesando = useRef<Set<number>>(new Set());
@@ -28,7 +29,7 @@ export const AbastecimientoGrid = ({ pistolas }: Props) => {
 
     const { data, mutate } = useSWR<IAbastecimiento[]>(
         `${process.env.NEXT_PUBLIC_URL}/api/abastecimientos`,
-        () => getAbastecimientos(pistolas, Constants.ESTADOS_ABASTECIMIENTO.PENDIENTE), 
+        () => getAbastecimientos(filtroPistolas, Constants.ESTADOS_ABASTECIMIENTO.PENDIENTE), 
         {
             refreshInterval: 2000,
             refreshWhenHidden: true,

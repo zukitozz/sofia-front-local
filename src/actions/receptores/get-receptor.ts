@@ -8,40 +8,56 @@ interface TableResponseReceptoresProps {
 }
 
 export async function getReceptores(page: number, perPage: number, keyword?: string): Promise<TableResponseReceptoresProps> {
+    // Es más común y limpio usar OFFSET y FETCH/LIMIT si tu BD lo soporta, 
+    // pero manteniendo tu lógica de BETWEEN, el cálculo de rangos está bien.
     const start = (page * perPage) - (perPage - 1);
     const end = (page * perPage);
 
-    let filtroAdicional = "";
+    // 1. Definir el filtro base para reutilizarlo en la paginación y en el conteo total
+    let innerFilter = "";
     if (keyword && keyword.trim() !== "") {
-        filtroAdicional = ` AND (numero_documento LIKE '%${keyword.trim()}%' OR razon_social LIKE '%${keyword.trim()}%')`;
+        const cleanKeyword = keyword.trim().replace(/'/g, "''"); // Evita roturas básicas por comillas singulares
+        innerFilter = ` WHERE (numero_documento LIKE '%${cleanKeyword}%' OR razon_social LIKE '%${cleanKeyword}%')`;
     }
-    const query = `select * from (
-                        SELECT id,numero_documento,tipo_documento,razon_social,direccion,correo,placa, ROW_NUMBER() OVER (ORDER BY id) AS RowNum FROM Receptores 
-                        ) as Result WHERE RowNum BETWEEN ${start} AND ${end} ${filtroAdicional} ;`
+
+    // 2. Aplicamos el filtro DENTRO del subquery para que ROW_NUMBER actúe sobre los datos filtrados
+    const query = `
+        SELECT * FROM (
+            SELECT id, numero_documento, tipo_documento, razon_social, direccion, correo, placa, 
+                   ROW_NUMBER() OVER (ORDER BY id) AS RowNum 
+            FROM Receptores 
+            ${innerFilter}
+        ) as Result 
+        WHERE RowNum BETWEEN ${start} AND ${end};
+    `;
     
     try {
-        const receptores = await executeQuery<IReceptor[]>(
-            process.env.DB_DATABASE_AUXILIAR||"", query
-            
-        );
-        
+        const dbName = process.env.DB_DATABASE_AUXILIAR || "";
 
-        const total = await executeQuery<[]>(
-            process.env.DB_DATABASE_AUXILIAR||"", 
-            `SELECT id FROM Receptores`
+        // Ejecutar consulta paginada
+        const receptores = await executeQuery<IReceptor[]>(dbName, query);
+        
+        // 3. El COUNT también debe verse afectado por el filtro, de lo contrario las páginas no coincidirán
+        const totalResult = await executeQuery<{ total: number }[]>(
+            dbName, 
+            `SELECT COUNT(id) as total FROM Receptores ${innerFilter}`
         );        
+        
+        const totalRegistros = totalResult[0]?.total || 0;
+        const totalPages = Math.ceil(totalRegistros / perPage);
+        
         const pageNumbers = [];
-        for (let i = 1; i <= Math.ceil(total.length / perPage); i++) {
+        for (let i = 1; i <= totalPages; i++) {
             pageNumbers.push(i);
         }
 
         return {
-            receptores : receptores as IReceptor[],
+            receptores,
             pageNumbers
-        }
+        };
+
     } catch (error) {
-        console.error("Error fetching getReceptores:");
-        console.error(JSON.stringify(error));
+        console.error("Error fetching getReceptores:", error);
         throw error;
     }
 }
