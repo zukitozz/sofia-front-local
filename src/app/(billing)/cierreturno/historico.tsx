@@ -25,7 +25,7 @@ export const Historico = () => {
     const handlerReprintCierre = async (id: number) => {
         setIsProcessing(true);
         try{
-            const { message, status } = await reprintCierre(session)
+            const { message, status } = await reprintCierre(id, session)
             if(status){          
                 notify({message})
             }else{

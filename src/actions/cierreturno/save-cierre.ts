@@ -12,9 +12,8 @@ interface IGenericResponse {
     status: boolean;
 }
 
-export async function reprintCierre(session: Session|null): Promise<IGenericResponse> {
+export async function reprintCierre(id: number, session: Session|null): Promise<IGenericResponse> {
     let message = `Ocurrió un error al solicitar reimpresión del comprobante`
-    const id = session?.user?.id || 0;
     const isla = session?.user?.isla || "";
     try {
         const query = `UPDATE Cierreturnos set impresion = 0, isla = '${isla}' where id = ${id}`;
