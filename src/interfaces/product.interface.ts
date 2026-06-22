@@ -12,9 +12,21 @@ export interface IProduct {
     estado: number;
     img: string;
     tipo: string;
+    codigosBarras?: ICodigoBarras[]; // Agregamos la propiedad opcional codigosBarras
 }
 export interface IFuelProduct {
     id: number;
     id_auxiliar: string;
     desc: string;
+}
+
+export interface ICodigoBarras {
+  id?: number;
+  codigo_barras: string;
+  estado: number; // 1: Activo, 0: Inactivo
+}
+export interface IProductoStoreResponse {
+    producto: IProduct|null;
+    message: string;
+    status: boolean;
 }

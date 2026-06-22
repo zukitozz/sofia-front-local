@@ -1,4 +1,4 @@
-import { ICierreTurnoDetalle, ICierreTurnoSoles, IComprobanteAdmin, ICierreTurnoResponse } from '@/interfaces';
+import { ICierreTurnoDetalle, ICierreTurnoSoles, IComprobanteAdmin, ICierreTurnoResponse, IProduct, IProductoStoreResponse } from '@/interfaces';
 import sql, { ConnectionPool, ISqlTypeFactoryWithLength, ISqlTypeFactoryWithNoParams, Transaction } from 'mssql';
 import { Constants } from './constants';
 import { Session } from 'next-auth';
@@ -235,6 +235,7 @@ import { toLocaleStorage } from './formats';
             throw error;
         }
     }
+
     export async function saveCierreTurnoTransaction(session: Session|null, total: number, soles: ICierreTurnoSoles, productos: ICierreTurnoDetalle[]): Promise<ICierreTurnoResponse>{
         config.database = process.env.DB_DATABASE_AUXILIAR||"";
         const pool: ConnectionPool = await sql.connect(config);
@@ -371,3 +372,99 @@ import { toLocaleStorage } from './formats';
             }
         }
     }    
+
+    export async function saveProductoTransaction({ id, medida, nombre, descripcion, precio, img, tipo, codigosBarras }: IProduct): Promise<IProductoStoreResponse> {
+    let message = `Ocurrió un error al registrar producto`;
+    config.database = process.env.DB_DATABASE_AUXILIAR || "";
+    let result: sql.IResult<any>;
+    let productoId: number | null = null;
+    let query = '';
+    
+    const pool: ConnectionPool = await sql.connect(config);
+    const transaction: Transaction = new sql.Transaction(pool);        
+    
+    try {
+        await transaction.begin();
+        const sqlRequest = new sql.Request(transaction);
+        sqlRequest.input('medida', sql.NVarChar, medida);
+        sqlRequest.input('nombre', sql.NVarChar, nombre);
+        sqlRequest.input('descripcion', sql.NVarChar, descripcion);
+        sqlRequest.input('precio', sql.Float, precio);
+        // Si el img viene undefined o null, asegúrate de enviar null a la DB
+        sqlRequest.input('img', sql.NVarChar, img || null); 
+        sqlRequest.input('tipo', sql.NVarChar, tipo);
+
+        if (id && id !== 0) { // Validamos que exista un ID real de actualización
+            sqlRequest.input('id', sql.Int, id); // Cambiado a sql.Int (los IDs suelen ser enteros, no Float)
+            productoId = id;
+            query = `UPDATE Productos set nombre = @nombre, descripcion = @descripcion, medida = @medida, precio = @precio, img = @img, tipo = @tipo where id = @id`;
+            await sqlRequest.query(query);
+        } else {
+            // SOLUCIÓN: Agregamos OUTPUT INSERTED.id para poder leer el ID generado
+            query = `INSERT into Productos (nombre, descripcion, medida, precio, img, tipo) 
+                     OUTPUT INSERTED.id 
+                     values (@nombre, @descripcion, @medida, @precio, @img, @tipo)`;
+            
+            result = await sqlRequest.query(query);
+            // Ahora sí el recordset tendrá la propiedad id disponible
+            productoId = result.recordset[0]?.id;
+        }
+
+        if (!productoId) {
+            throw new Error("No se pudo obtener o asignar el ID del producto.");
+        }
+ 
+        for (const codigo of codigosBarras || []) {
+            const sqlRequestCodigo = new sql.Request(transaction);
+            sqlRequestCodigo.input('codigo_barras', sql.NVarChar, codigo.codigo_barras);
+            sqlRequestCodigo.input('estado', sql.Int, codigo.estado);
+            sqlRequestCodigo.input('ProductoId', sql.Int, productoId);
+            
+            let queryCodigo = '';
+            if (codigo.id) {
+                sqlRequestCodigo.input('id', sql.Int, codigo.id);
+                queryCodigo = `UPDATE CodigosBarras set codigo_barras = @codigo_barras, estado = @estado, ProductoId = @ProductoId where id = @id`;
+            } else {
+                queryCodigo = `INSERT INTO CodigosBarras (codigo_barras, estado, ProductoId) VALUES (@codigo_barras, @estado, @ProductoId)`;
+            }
+            
+            await sqlRequestCodigo.query(queryCodigo);
+        }
+
+        message = `Producto almacenado correctamente`;
+        await transaction.commit();
+        
+        return {
+            message,
+            status: true,
+            producto: null
+        };            
+    } catch (error: any) { // Cambiamos a 'any' temporalmente para acceder a las propiedades de mssql
+        console.log("Error executing transaction: saveProductoTransaction");
+        console.error(error);
+        
+        // Intentamos hacer rollback de forma segura
+        if (transaction) {
+            try { await transaction.rollback(); } catch(e) { console.error("Error en rollback", e); }
+        }
+
+        // 1. CAPTURA DEL ERROR ESPECÍFICO DE DUPLICADO
+        // El número 2601 corresponde a "Infracción de la restricción UNIQUE INDEX"
+        // El número 2627 corresponde a "Infracción de la restricción PRIMARY KEY / UNIQUE"
+        if (error.number === 2601 || error.number === 2627) {
+            // Intentamos extraer el valor duplicado del mensaje original usando una expresión regular
+            const match = error.message.match(/\(([^)]+)\)/);
+            const valorDuplicado = match ? match[1] : '';
+            
+            message = `El código de barras ${valorDuplicado ? `'${valorDuplicado}' ` : ''}ya está registrado en otro producto.`;
+        } else {
+            message = `${message} | ${error.message || JSON.stringify(error)}`;
+        }
+        
+        return {
+            message,
+            status: false,
+            producto: null
+        };   
+    }
+}

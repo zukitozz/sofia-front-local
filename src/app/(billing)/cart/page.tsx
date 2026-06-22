@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { Title } from '@/components';
+import { BarcodeListener, Title } from '@/components';
 import { ProductsInCart } from './ui/ProductsInCart';
 import { OrderSummary } from './ui/OrderSummary';
 
@@ -17,7 +17,7 @@ export default function CartPage() {
       <div className="flex flex-col w-[1000px]">
 
         <Title title='Carrito' />
-
+        <BarcodeListener />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
 
