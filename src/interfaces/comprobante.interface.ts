@@ -94,3 +94,48 @@ export interface IComprobanteHistorico extends IComprobanteAdmin {
     isla: string;
     usuario: string;
 }
+
+export interface IComprobantePDF {
+    NumeracionComprobante: string;
+    Isla: string;
+    Pistola: string;
+    Placa: string;
+
+    InicioMedidor: string;
+    FinMedidor: string;
+
+    Efectivo: number;
+    Tarjeta: number;
+    Yape: number;
+
+    EmisorRazonSocial: string;
+    EmisorRuc: string;
+    EmisorDireccion: string;
+    TipoComprobante: string;
+    ReceptorRazonSocial: string;
+    ReceptorRuc: string;
+    ReceptorDireccion: string;
+
+    CodigoHash: string;
+
+    FechaEmision: string;
+    FechaVencimiento: string;
+    NumeroOrdenCompra: string;
+    NumeroGuiaRemision: string;
+    CondicionPago: string;
+    MontoLetras: string;
+    TotalGravadas: number;
+    TotalIgv: number;
+    TotalVenta: number;
+    Items: IComprobantePDFItem[];
+}
+
+export interface IComprobantePDFItem {
+    codigo: string;
+    cantidad: string;
+    medida: string;
+    descripcion: string;
+    total_unitario: number;
+    precio_unitario: number;
+}
+

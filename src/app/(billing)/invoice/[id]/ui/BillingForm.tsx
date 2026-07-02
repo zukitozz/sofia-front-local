@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { saveBilling, validatePrevBilling } from "@/actions";
 import { useOrderAbastecimientoStore } from "@/store";
-import { Constants, initialBillingForm, notify } from "@/utils";
+import { Constants, initialBillingForm, notify, numbersToLetters } from "@/utils";
 import { Direccion, NumeroDocumento, Placa, RazonSocial, TipoPago } from "./form-values";
 import { Comprobante } from "@/model";
 import { FloatingMenu } from "./form-values/FloatMenu";
@@ -153,12 +153,15 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
         const cantidad = order_abastecimiento?.cantidad || 0;
         const codigo_producto = order_abastecimiento?.codigo_producto || "";
         const pistola = order_abastecimiento?.pistola || 0;
+        const inicio_medidor = order_abastecimiento?.total_inicio || 0;
+        const fin_medidor = order_abastecimiento?.total_final || 0;
         const ruc = process.env.NEXT_PUBLIC_RUC || ""
         const arr_notas: number[] = notas.map(nota => nota.id || 0);
+        const monto_letras = numbersToLetters(total);
 
         const comprobante = new Comprobante(
             receptor, tipoComprobante, subTotal, totalIgv, total, tarjeta==''?0: +tarjeta, efectivo==''?0: +efectivo, yape==''?0: +yape, ruc, UsuarioId, items, placa, 
-            fecha_abastecimiento, tiempo_abastecimiento, IslaId, id_abastecimiento, pistola, codigo_producto, cantidad, arr_notas
+            fecha_abastecimiento, tiempo_abastecimiento, IslaId, id_abastecimiento, pistola, codigo_producto, cantidad, inicio_medidor, fin_medidor, monto_letras, arr_notas
         )
 
         const validatePrev = await validatePrevBilling(id_abastecimiento);

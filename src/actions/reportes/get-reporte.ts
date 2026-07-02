@@ -30,7 +30,7 @@ export async function obtieneReporteDeclaracionMensual(fecha: string): Promise<I
             select c.tipo_comprobante, r.tipo_documento, r.numero_documento, c.numeracion_comprobante, c.tipo_documento_afectado, c.numeracion_documento_afectado, c.fecha_emision, LEFT(convert(varchar,c.fecha_hora,108), 8) as hora, CAST(c.total_gravadas as decimal(10,2)) as total_gravadas, CAST(c.total_igv as decimal(10,2)) as total_igv, CAST(c.total_venta as decimal(10,2)) as total_venta, c.dec_combustible, c.volumen, c.pistola, c.tiempo_abastecimiento, c.ruc 
             from Comprobantes c 
             inner join Receptores r on c.ReceptorId = r.id 
-            where YEAR(fecha_emision) = '${split_fecha[0]}' and MONTH(fecha_emision) = '${split_fecha[1]}' and tipo_comprobante in ('01','03','07') and c.errors = ' '
+            where YEAR(fecha_emision) = '${split_fecha[0]}' and MONTH(fecha_emision) = '${split_fecha[1]}' and tipo_comprobante in ('01','03','07') and ISNULL(c.errors, '') = '' 
             order by c.id desc;
         `
     );    

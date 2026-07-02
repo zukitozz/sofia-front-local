@@ -57,8 +57,9 @@ export class Comprobante implements IComprobanteAdmin{
         receptor: IReceptor, tipo_comprobante: string, gravadas: number, igv: number, total: number, tarjeta: number, efectivo: number, yape: number,
         ruc: string, UsuarioId: number, items: IComprobanteAdminItem[], placa: string|null, 
         fecha_abastecimiento: Date|null, tiempo_abastecimiento: number | null, IslaId: number, 
-        id_abastecimiento: number|null = null, pistola: number = 0, codigo_combustible: string = "", volumen: number = 0, notas: number[] = [], 
-        volumen_tanque: number = 0, dec_combustible: string = "", comentario: string = ""
+        id_abastecimiento: number|null = null, pistola: number = 0, codigo_combustible: string = "", volumen: number = 0, 
+        inicio_medidor: number = 0, fin_medidor: number = 0, monto_letras: string|null = null,
+        notas: number[] = [], volumen_tanque: number = 0, dec_combustible: string = "", comentario: string = ""
     ) {
         this.tipo_comprobante = tipo_comprobante;
         this.numeracion = "";
@@ -74,7 +75,7 @@ export class Comprobante implements IComprobanteAdmin{
         this.gravadas = gravadas;
         this.igv = igv;
         this.total = total;
-        this.monto_letras = null;
+        this.monto_letras = monto_letras;
         this.id_abastecimiento = id_abastecimiento;
         this.pistola = pistola;
         this.tarjeta = tarjeta;
@@ -87,6 +88,8 @@ export class Comprobante implements IComprobanteAdmin{
         this.Receptor = receptor;
         this.codigo_combustible = codigo_combustible;
         this.volumen = volumen;
+        this.inicio_medidor = inicio_medidor;
+        this.fin_medidor = fin_medidor;
         this.notas = notas;
         this.dec_combustible = dec_combustible;
         this.fecha_abastecimiento = moment(fecha_abastecimiento).format("YYYY-MM-DD HH:mm:ss");
