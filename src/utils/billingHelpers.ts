@@ -87,6 +87,9 @@ export const buildComprobanteFromAbastecimiento = ({
     abastecimiento.pistola,
     abastecimiento.codigoCombustible.toString() || "0",
     cantidad,
+    0,
+    0,
+    null,
     []      // arr_notas vacío para autoboleteo
   );
 };
