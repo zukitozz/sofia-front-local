@@ -7,7 +7,7 @@ export const currencyFormat = (value: number) => {
   }).format(value);
   
 };
-
+// sirve para redondear
 export const redondear = (value: number, decimals?: number) => {
   switch (decimals) {
     case 10:
