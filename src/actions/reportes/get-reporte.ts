@@ -93,9 +93,11 @@ export async function obtieneReporteComprobantes({ boletas, factura, notasCredit
         if(boletas) conditions += `c.tipo_comprobante = '03' OR `;
         if(factura) conditions += `c.tipo_comprobante = '01' OR `;
         if(notasCredito) conditions += `c.tipo_comprobante = '07' OR `;
-        if(notasDespacho) conditions += `c.tipo_comprobante = '08' OR `;
-        if(calibracion) conditions += `c.tipo_comprobante = '09' OR `;
+        if(notasDespacho) conditions += `c.tipo_comprobante = '50' OR `;
+        if(calibracion) conditions += `c.tipo_comprobante = '51' OR `;
         where += ` and (${conditions.slice(0, -4)})`; // Eliminar el último " OR "
+    } else {
+        where += ` and 1=0`;
     }
     const query = `
         select TOP 100 c.id as id, numeracion_comprobante as comprobante, c.fecha_hora as fecha, fecha_abastecimiento as fechahora, r.numero_documento, r.razon_social as receptor, c.placa, c.dec_combustible, c.total  as total, u.nombre as usuario, c.url  
