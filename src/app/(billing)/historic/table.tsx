@@ -52,7 +52,7 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
 
     const { data, error, isValidating, isLoading, mutate } = useSWR(
         `${process.env.NEXT_PUBLIC_URL}/api?page=${currentPage}&date=${date}&num=${numeracion}`, 
-        () => fetcher(currentPage, 10, date, numeracion)
+        () => fetcher(currentPage, perPage, date, numeracion)
     );
 
     useEffect(() => {
