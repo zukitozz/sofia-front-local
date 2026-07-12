@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import { useRouter } from "next/navigation";
 import { obtieneCierreDia, obtieneTurnosAbiertos, saveCierreDia } from '@/actions'
 import { ICierreTurno, ICierreTurnoDetalle, IDepositos, IGastos } from '@/interfaces';
-import { currencyFormat, notify, toLocaleStorage } from '@/utils';
+import { currencyFormat, notify, notifyConfirm, toLocaleStorage } from '@/utils';
 import { useSession } from "next-auth/react";
 import { ResumenTable } from '@/components';
 
@@ -58,10 +58,12 @@ export const CierreSection = ({ page, perPage, keyword }: TableProps) => {
         try{
             const abiertos = await obtieneTurnosAbiertos();
             if (abiertos.length > 0) {
-                const detalle = abiertos.map(t => `• ${t.nombre} (${t.turno}, ${t.isla}) — ${t.pendientes} comprobantes sin cerrar`).join('\n');
-                const continuar = window.confirm(
-                    `Hay turnos abiertos que NO se incluirán en este cierre de día:\n\n${detalle}\n\n¿Deseas continuar de todos modos?`
-                );
+                const continuar = await notifyConfirm({
+                    message: 'Hay turnos abiertos que NO se incluirán en este cierre de día. ¿Deseas continuar de todos modos?',
+                    detail: abiertos.map(t => `${t.nombre} (${t.turno}, ${t.isla}) — ${t.pendientes} comprobantes sin cerrar`),
+                    confirmText: 'Continuar de todos modos',
+                    cancelText: 'Cancelar',
+                });
                 if (!continuar) {
                     setIsProcessing(false);
                     return;
