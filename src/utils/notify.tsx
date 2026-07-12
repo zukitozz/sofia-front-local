@@ -42,3 +42,51 @@ export const notify = ({ message, type = 'success' }: Props) => {
         toast.success((t) => content(t), options);
     }
 };
+
+interface ConfirmProps {
+    message: string;
+    detail?: string[];
+    confirmText?: string;
+    cancelText?: string;
+}
+
+// Variante de notify que espera una decisión: devuelve true si el usuario
+// confirma y false si cancela. Reemplaza al window.confirm nativo.
+export const notifyConfirm = ({ message, detail = [], confirmText = 'Continuar', cancelText = 'Cancelar' }: ConfirmProps): Promise<boolean> => {
+    return new Promise((resolve) => {
+        const responder = (id: string, respuesta: boolean) => {
+            toast.dismiss(id);
+            resolve(respuesta);
+        };
+
+        toast.custom((t) => (
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-5 max-w-md w-full">
+                <div className="flex items-start gap-3">
+                    <span className="text-amber-500 text-xl leading-none">⚠️</span>
+                    <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-800">{message}</p>
+                        {detail.length > 0 && (
+                            <ul className="mt-2 space-y-1 text-xs text-gray-600 list-disc list-inside">
+                                {detail.map((linea, i) => <li key={i}>{linea}</li>)}
+                            </ul>
+                        )}
+                    </div>
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                    <button
+                        onClick={() => responder(t.id, false)}
+                        className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                        {cancelText}
+                    </button>
+                    <button
+                        onClick={() => responder(t.id, true)}
+                        className="px-4 py-2 text-sm font-medium rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors"
+                    >
+                        {confirmText}
+                    </button>
+                </div>
+            </div>
+        ), { duration: Infinity, position: 'top-center' });
+    });
+};
