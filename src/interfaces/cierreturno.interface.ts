@@ -60,3 +60,12 @@ export interface ICierreTurnoResponse {
     message: string;
     status: boolean;
 }
+
+export interface IUsuarioTurnoAbierto {
+    UsuarioId: number;
+    nombre: string;
+    turno: string;
+    isla: string;
+    pendientes: number;
+    desde: string;
+}

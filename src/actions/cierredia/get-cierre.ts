@@ -1,6 +1,6 @@
 "use server";
 import { executeQuery } from '@/utils/db';
-import { ICierreTurno, ICierreTurnoDetalle, IDepositos, IGastos, IUser } from "@/interfaces";
+import { ICierreTurno, ICierreTurnoDetalle, IDepositos, IGastos, IUser, IUsuarioTurnoAbierto } from "@/interfaces";
 
 export async function obtieneCierreDia(): Promise<ICierreTurno[]> {
     const cierres = await executeQuery<ICierreTurno[]>(
@@ -50,4 +50,31 @@ export async function obtieneCierreDia(): Promise<ICierreTurno[]> {
             return cierre;
     }))
     return cierres;
+}
+
+export async function obtieneTurnosAbiertos(): Promise<IUsuarioTurnoAbierto[]> {
+    // Se agrupa por usuario ANTES de cruzar con Logins para que las sesiones
+    // abiertas duplicadas no multipliquen el conteo de pendientes
+    return await executeQuery<IUsuarioTurnoAbierto[]>(
+        process.env.DB_DATABASE_AUXILIAR||"",
+        `
+            select u.id as UsuarioId, u.nombre,
+                   isnull(l.jornada, 'SIN SESION') as turno,
+                   isnull(l.isla, '-') as isla,
+                   p.pendientes, p.desde
+            from (
+                select UsuarioId, count(*) as pendientes, min(fecha_hora) as desde
+                from Comprobantes
+                where CierreturnoId is null
+                group by UsuarioId
+            ) p
+            inner join Usuarios u on u.id = p.UsuarioId
+            outer apply (
+                select top 1 jornada, isla
+                from Logins
+                where UsuarioId = u.id and fecha_fin is null
+                order by fecha_inicio desc
+            ) l;
+        `
+    );
 }
