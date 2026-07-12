@@ -44,7 +44,7 @@ export const ReporteCierreTurnosProductos = () => {
 
     useEffect(() => {
         mutate();
-    }, [date]);
+    }, [date, isChecked]);
 
     if (isLoading || isValidating) {
         return (
