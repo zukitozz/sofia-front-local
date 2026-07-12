@@ -301,11 +301,12 @@ import { toLocaleStorage } from './formats';
                 await sqlRequestDepositos.query(`Update Depositos set CierreturnoId = @CierreturnoId where UsuarioId = @UsuarioId and CierreturnoId is null`);
 
 
+                // Cierra TODAS las sesiones abiertas del usuario, sin filtrar por jornada:
+                // las de otras jornadas nunca serían cerradas por ningún cierre y se acumulan
                 const sqlRequestLogins = new sql.Request(transaction);
                 sqlRequestLogins.input('UsuarioId', sql.Int, usuarioId);
-                sqlRequestLogins.input('jornada', sql.NVarChar, turno);
                 sqlRequestLogins.input('fecha_fin', sql.NVarChar, toLocaleStorage(new Date()));
-                await sqlRequestLogins.query(`Update Logins set fecha_fin = @fecha_fin where UsuarioId = @UsuarioId and fecha_fin is null and jornada = @jornada`);
+                await sqlRequestLogins.query(`Update Logins set fecha_fin = @fecha_fin where UsuarioId = @UsuarioId and fecha_fin is null`);
 
                 await transaction.commit();
 

@@ -3,7 +3,7 @@ import { useState } from 'react'; // 1. Importamos useState para controlar el fl
 import useSWR from 'swr';
 
 import { useRouter } from "next/navigation";
-import { obtieneCierreDia, saveCierreDia } from '@/actions'
+import { obtieneCierreDia, obtieneTurnosAbiertos, saveCierreDia } from '@/actions'
 import { ICierreTurno, ICierreTurnoDetalle, IDepositos, IGastos } from '@/interfaces';
 import { currencyFormat, notify, toLocaleStorage } from '@/utils';
 import { useSession } from "next-auth/react";
@@ -50,11 +50,29 @@ export const CierreSection = ({ page, perPage, keyword }: TableProps) => {
     const totalNetoDia = totalGeneral - totalDepositosDia - totalGastosDia;
 
     // 3. Modificamos el controlador para bloquear el hilo de ejecución inmediatamente
-    const handlerProcessCierre = async () => {      
+    const handlerProcessCierre = async () => {
         if (isProcessing) return; // Salvaguarda extra a nivel de función
+        setIsProcessing(true); // Se bloquea desde el inicio para cubrir también la verificación previa
+
+        // Verificación previa: turnos abiertos con comprobantes que quedarían fuera del cierre
+        try{
+            const abiertos = await obtieneTurnosAbiertos();
+            if (abiertos.length > 0) {
+                const detalle = abiertos.map(t => `• ${t.nombre} (${t.turno}, ${t.isla}) — ${t.pendientes} comprobantes sin cerrar`).join('\n');
+                const continuar = window.confirm(
+                    `Hay turnos abiertos que NO se incluirán en este cierre de día:\n\n${detalle}\n\n¿Deseas continuar de todos modos?`
+                );
+                if (!continuar) {
+                    setIsProcessing(false);
+                    return;
+                }
+            }
+        }catch{
+            // La verificación es informativa: si falla no debe impedir el cierre del día
+            notify({message: 'No se pudo verificar turnos abiertos, se continúa con el cierre', type: 'error'})
+        }
 
         try{
-            setIsProcessing(true);
             const { message, status } = await saveCierreDia(session, totalGeneral);
             if(status){          
                 notify({message})
