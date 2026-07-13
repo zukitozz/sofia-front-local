@@ -132,9 +132,9 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
         </div>
 
         <div className="mb-10 w-full overflow-x-auto min-h-[200px] relative">
-            <table className="w-full min-w-[1300px] table-fixed">
+            <table className="w-full min-w-[1360px] table-fixed">
                 <colgroup>
-                    <col className="w-[140px]" />  {/* Fecha */}
+                    <col className="w-[200px]" />  {/* Fecha */}
                     <col />  {/* Cliente (sin ancho: absorbe el espacio restante) */}
                     <col className="w-[130px]" />  {/* Comprobante */}
                     <col className="w-[90px]" />   {/* Total */}
