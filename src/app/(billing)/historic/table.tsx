@@ -79,7 +79,7 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
                 data?.historicos?.map((item : IComprobanteHistorico) => (
                     <tr key={`${item.id}-${item.numeracion_comprobante}`} className="bg-white border-b transition duration-300 ease-in-out hover:bg-gray-100">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{toLocaleShow(item.fecha_hora)}</td>
-                        <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap">{item.Receptor.razon_social}</td>
+                        <td className="text-sm text-gray-900 font-light px-6 py-4 truncate" title={item.Receptor.razon_social}>{item.Receptor.razon_social}</td>
                         <td className="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap">{item.numeracion_comprobante}</td>
                         <td className="text-sm text-gray-900 font-light px-6 ">{item.total}</td>
                         <td className="text-sm text-gray-900 font-light px-6 ">{item.isla}</td>
@@ -132,7 +132,19 @@ export const HistoricosTable = ({ page, perPage }: TableProps) => {
         </div>
 
         <div className="mb-10 w-full overflow-x-auto min-h-[200px] relative">
-            <table className="min-w-full">
+            <table className="w-full min-w-[1300px] table-fixed">
+                <colgroup>
+                    <col className="w-[140px]" />  {/* Fecha */}
+                    <col />  {/* Cliente (sin ancho: absorbe el espacio restante) */}
+                    <col className="w-[130px]" />  {/* Comprobante */}
+                    <col className="w-[90px]" />   {/* Total */}
+                    <col className="w-[90px]" />   {/* Isla */}
+                    <col className="w-[90px]" />   {/* Turno */}
+                    <col className="w-[100px]" />  {/* Usuario */}
+                    <col className="w-[80px]" />   {/* PDF */}
+                    <col className="w-[110px]" />  {/* SUNAT */}
+                    <col className="w-[150px]" />  {/* Acciones */}
+                </colgroup>
                 <thead className="bg-gray-200 border-b">
                     <tr>
                         <th scope="col" className="text-sm font-medium text-gray-900 px-6 py-4 text-left">Fecha</th>
