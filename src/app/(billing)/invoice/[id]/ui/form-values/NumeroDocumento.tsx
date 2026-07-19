@@ -57,9 +57,11 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
         }
     };
     useEffect(() => {
-        const { numeroDocumento } = formValues;
-        const tipoComprobante = numeroDocumento.length === 11 ? Constants.TIPO_COMPROBANTE.FACTURA : (  (numeroDocumento.length === 8 || numeroDocumento === "0") ? Constants.TIPO_COMPROBANTE.BOLETA : '');
-        const tipoDocumento = numeroDocumento.length === 11 ? Constants.TIPO_DOCUMENTO.RUC : (  (numeroDocumento.length === 8 || numeroDocumento === "0") ? Constants.TIPO_DOCUMENTO.DNI : '');        
+        const { numeroDocumento, tipoComprobante: tipoActual } = formValues;
+        // La selección manual de Nota de despacho / Serafín (calibración) no se pisa al tipear el documento
+        const esSeleccionManual = tipoActual === Constants.TIPO_COMPROBANTE.NOTA_DESPACHO || tipoActual === Constants.TIPO_COMPROBANTE.CALIBRACION;
+        const tipoComprobante = esSeleccionManual ? tipoActual : (numeroDocumento.length === 11 ? Constants.TIPO_COMPROBANTE.FACTURA : (  (numeroDocumento.length === 8 || numeroDocumento === "0") ? Constants.TIPO_COMPROBANTE.BOLETA : ''));
+        const tipoDocumento = numeroDocumento.length === 11 ? Constants.TIPO_DOCUMENTO.RUC : (  (numeroDocumento.length === 8 || numeroDocumento === "0") ? Constants.TIPO_DOCUMENTO.DNI : '');
         setFormValues({ ...formValues, tipoComprobante, tipoDocumento });
     }, [formValues.numeroDocumento])
     

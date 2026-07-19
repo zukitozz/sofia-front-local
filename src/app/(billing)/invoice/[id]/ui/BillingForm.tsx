@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { saveBilling, validatePrevBilling } from "@/actions";
 import { useOrderAbastecimientoStore } from "@/store";
 import { Constants, initialBillingForm, notify, numbersToLetters } from "@/utils";
-import { Direccion, NumeroDocumento, Placa, RazonSocial, TipoPago } from "./form-values";
+import { Direccion, NumeroDocumento, Placa, RazonSocial, TipoComprobanteSelector, TipoPago } from "./form-values";
 import { Comprobante } from "@/model";
-import { FloatingMenu } from "./form-values/FloatMenu";
 import { IBillingForm, IComprobanteAdminItem, IOrderItem, IReceptor } from "@/interfaces";
 
 interface Props {
@@ -60,6 +59,8 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
     const { tipoComprobante, tipoDocumento, numeroDocumento, razonSocial, placa, direccion, efectivo, tarjeta, yape } = formValues;
 
     const getTitle = () => {
+        if (tipoComprobante === Constants.TIPO_COMPROBANTE.NOTA_DESPACHO) return 'NOTA DE DESPACHO';
+        if (tipoComprobante === Constants.TIPO_COMPROBANTE.CALIBRACION) return 'SERAFÍN (CALIBRACIÓN)';
         if (tipoDocumento === Constants.TIPO_DOCUMENTO.RUC) return 'FACTURA ELECTRÓNICA';
         if (tipoDocumento === Constants.TIPO_DOCUMENTO.DNI) return 'BOLETA ELECTRÓNICA';
         return 'Datos de venta';
@@ -184,8 +185,8 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
         <>
         <div className="flex justify-between items-center">
             <h2 className="text-2xl mb-2 font-bold text-slate-800">{getTitle()}</h2>
-            <FloatingMenu formValues={formValues} setFormValues={setFormValues} state={formValues.numeroDocumento.length === 0} />
         </div>
+        <TipoComprobanteSelector formValues={formValues} setFormValues={setFormValues} disabled={isDisabled} />
         <div className="flex flex-col mt-5">
 
             <form onSubmit={handlerProcessBilling} autoComplete="off" className="flex flex-col">
