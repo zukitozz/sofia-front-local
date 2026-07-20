@@ -64,4 +64,11 @@ export interface IOrderItem {
     img?: string;
     nombre_producto?: string;
     descuento_aplicado?: boolean;
+    precios_sin_descuento?: {
+        precio_unitario: number;
+        valor_unitario: number;
+        precio: number;
+        valor: number;
+        igv: number;
+    };
 }
