@@ -23,25 +23,19 @@ export const TipoComprobanteSelector = ({ formValues, setFormValues, disabled = 
     const handlerSelect = (tipo: string) => {
         if (tipo === formValues.tipoComprobante) return;
 
-        const esBoletaOFactura = tipo === Constants.TIPO_COMPROBANTE.BOLETA || tipo === Constants.TIPO_COMPROBANTE.FACTURA;
-        if (esBoletaOFactura) {
-            // Al navegar entre Boleta y Factura se reinicia el cliente: se borra el documento,
-            // se revierten los descuentos aplicados y se desbloquea el campo para el nuevo cliente
-            removeDiscounts();
-            unlockBilling();
-            setFormValues({
-                ...formValues,
-                tipoComprobante: tipo,
-                tipoDocumento: '',
-                numeroDocumento: '',
-                razonSocial: '',
-                direccion: '',
-                placa: ''
-            });
-            return;
-        }
-
-        setFormValues({ ...formValues, tipoComprobante: tipo });
+        // Cambiar de tipo de comprobante reinicia el cliente: se borra el documento,
+        // se revierten los descuentos aplicados y se desbloquea el campo para el nuevo cliente
+        removeDiscounts();
+        unlockBilling();
+        setFormValues({
+            ...formValues,
+            tipoComprobante: tipo,
+            tipoDocumento: '',
+            numeroDocumento: '',
+            razonSocial: '',
+            direccion: '',
+            placa: ''
+        });
     };
 
     return (
