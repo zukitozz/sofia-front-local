@@ -18,6 +18,7 @@ interface State {
     getSummaryInformation: () => { subTotal: number; totalIgv: number; total: number };
     removeProduct: (product: IOrderItem) => void;
     applyDiscountIfExists: (numeroDocumento: string) => Promise<{ status: boolean; message: string }>;
+    removeDiscounts: () => void;
     removeAllProducts: () => void;
     addNotaDespachoToOrder: (item: INotaDespacho) => void;
 }
@@ -170,6 +171,15 @@ export const useOrderAbastecimientoStore = create<State>()(
                     if (descuento && !item.descuento_aplicado) {
                         status = true;
                         const taxRate = Number.parseFloat(process.env.NEXT_PUBLIC_TAX || "0.18");
+
+                        // Snapshot de los precios originales para poder revertir el descuento
+                        const precios_sin_descuento = {
+                            precio_unitario: item.precio_unitario,
+                            valor_unitario: item.valor_unitario,
+                            precio: item.precio,
+                            valor: item.valor,
+                            igv: item.igv
+                        };
                         
                         // 1. Identificar o calcular el descuento por galón (monto unitario)
                         // Si tu descuento de la API ya viene por galón, usa directamente: descuento.monto_descuento
@@ -195,13 +205,30 @@ export const useOrderAbastecimientoStore = create<State>()(
                             precio: nuevoPrecioTotal,          // Total con IGV
                             valor: nuevoValorTotal,            // Total sin IGV
                             igv: nuevoIgvTotal,                // Impuesto total del item
-                            descuento_aplicado: true 
+                            descuento_aplicado: true,
+                            precios_sin_descuento
                         };
                     }
                     return item;
                 });
                 set({ items: updatedItems });
                 return { status, message: "Descuentos aplicados correctamente" };
+            },
+            removeDiscounts: () => {
+                const { items } = get();
+                const updatedItems = items.map((item) => {
+                    if (item.descuento_aplicado && item.precios_sin_descuento) {
+                        const { precio_unitario, valor_unitario, precio, valor, igv } = item.precios_sin_descuento;
+                        return {
+                            ...item,
+                            precio_unitario, valor_unitario, precio, valor, igv,
+                            descuento_aplicado: false,
+                            precios_sin_descuento: undefined
+                        };
+                    }
+                    return item;
+                });
+                set({ items: updatedItems });
             },
             removeAllProducts: () => {
                 set({ items: [], notas: [] });

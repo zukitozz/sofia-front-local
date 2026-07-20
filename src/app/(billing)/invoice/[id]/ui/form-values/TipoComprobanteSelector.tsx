@@ -1,5 +1,6 @@
 'use client'
 import { IBillingForm } from '@/interfaces/billing.interface';
+import { useOrderAbastecimientoStore } from '@/store';
 import { Constants } from '@/utils';
 
 interface Props {
@@ -16,8 +17,30 @@ const opciones = [
 ];
 
 export const TipoComprobanteSelector = ({ formValues, setFormValues, disabled = false }: Props) => {
+    const removeDiscounts = useOrderAbastecimientoStore((state) => state.removeDiscounts);
+    const unlockBilling = useOrderAbastecimientoStore((state) => state.unlockBilling);
 
     const handlerSelect = (tipo: string) => {
+        if (tipo === formValues.tipoComprobante) return;
+
+        const esBoletaOFactura = tipo === Constants.TIPO_COMPROBANTE.BOLETA || tipo === Constants.TIPO_COMPROBANTE.FACTURA;
+        if (esBoletaOFactura) {
+            // Al navegar entre Boleta y Factura se reinicia el cliente: se borra el documento,
+            // se revierten los descuentos aplicados y se desbloquea el campo para el nuevo cliente
+            removeDiscounts();
+            unlockBilling();
+            setFormValues({
+                ...formValues,
+                tipoComprobante: tipo,
+                tipoDocumento: '',
+                numeroDocumento: '',
+                razonSocial: '',
+                direccion: '',
+                placa: ''
+            });
+            return;
+        }
+
         setFormValues({ ...formValues, tipoComprobante: tipo });
     };
 
