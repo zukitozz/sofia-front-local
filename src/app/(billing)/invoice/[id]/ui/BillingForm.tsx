@@ -78,6 +78,16 @@ export const BillingForm = ({ orders, subTotal, totalIgv, total }: Props) => {
             return false;
         }
 
+        if (tipoComprobante === Constants.TIPO_COMPROBANTE.NOTA_DESPACHO && (tipoDocumento !== Constants.TIPO_DOCUMENTO.RUC || numeroDocumento.length !== 11)) {
+            notify({ message: 'La nota de despacho se emite solo con RUC (11 dígitos)', type: 'error' });
+            return false;
+        }
+
+        if (tipoComprobante === Constants.TIPO_COMPROBANTE.CALIBRACION && tipoDocumento !== Constants.TIPO_DOCUMENTO.DNI) {
+            notify({ message: 'El serafín se emite solo con DNI (8 dígitos)', type: 'error' });
+            return false;
+        }
+
         if(formValues.numeroDocumento != "0"){
             if(!tipoDocumento){
                 notify({ message: 'Ingrese un número de documento de 8 u 11 dígitos', type: 'error' });

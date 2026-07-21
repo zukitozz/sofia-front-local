@@ -1,4 +1,4 @@
-import { IAbastecimiento, IComprobanteAdmin, IFuelProduct, INotaDespacho, IOrderItem, IProduct } from "@/interfaces";
+import { IAbastecimiento, IComprobanteAdmin, INotaDespacho, IOrderItem, IProduct } from "@/interfaces";
 import { Constants } from "@/utils";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
