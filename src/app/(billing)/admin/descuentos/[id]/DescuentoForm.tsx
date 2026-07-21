@@ -52,8 +52,21 @@ export const DescuentosForm = ({ descuento, productos }: Props) => {
     };    
     const handlerProcessBilling = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        await saveDescuento(formValues);
-        router.push('/admin/descuentos')
+        if (!formValues.numero_documento || !formValues.codigo_producto) {
+            notify({ message: 'Ingrese el documento del cliente y seleccione el producto', type: 'error' });
+            return;
+        }
+        if (!formValues.monto_descuento || formValues.monto_descuento <= 0) {
+            notify({ message: 'Ingrese un monto de descuento mayor a 0', type: 'error' });
+            return;
+        }
+        try {
+            const { success, message } = await saveDescuento(formValues);
+            notify({ message, type: success ? 'success' : 'error' });
+            if (success) router.push('/admin/descuentos');
+        } catch {
+            notify({ message: 'Error al guardar el descuento, intente nuevamente', type: 'error' });
+        }
     }
 
     return (
@@ -102,12 +115,12 @@ export const DescuentosForm = ({ descuento, productos }: Props) => {
                         </select>
                     </div> 
                     <div className='col-span-1'>
-                        <label htmlFor="placa">Precio</label>
+                        <label htmlFor="monto_descuento">Monto descuento (S/ por galón)</label>
                         <input
                             className="px-5 py-2 border bg-gray-200 rounded w-full"
                             type="text"
-                            name="placa" 
-                            defaultValue={ descuento?.monto_descuento } 
+                            name="monto_descuento"
+                            defaultValue={ descuento?.monto_descuento }
                             onChange={ handleChangeMonto }
                         />
                     </div>

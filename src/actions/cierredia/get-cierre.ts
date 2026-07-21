@@ -68,7 +68,7 @@ export async function obtieneTurnosAbiertos(): Promise<IUsuarioTurnoAbierto[]> {
                 where CierreturnoId is null
                 group by UsuarioId
             ) p
-            inner join Usuarios u on u.id = p.UsuarioId
+            inner join Usuarios u on u.id = p.UsuarioId and u.rol = 'USER_ROLE'
             outer apply (
                 select top 1 jornada, isla
                 from Logins

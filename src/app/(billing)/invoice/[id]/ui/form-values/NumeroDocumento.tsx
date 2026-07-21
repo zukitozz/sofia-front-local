@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { getReceptorByDocumento } from '@/actions';
 import { useOrderAbastecimientoStore } from "@/store";
 import { IBillingForm } from '@/interfaces/billing.interface';
@@ -17,12 +17,12 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
     const lockBilling = useOrderAbastecimientoStore((state) => state.lockBilling);
     const isBillingBlocked = useOrderAbastecimientoStore((state) => state.isBillingBlocked);
 
-    const [hasDiscount, setHasDiscount] = useState(false);
+    // Badge e input verde derivados del store: única fuente de verdad, se apaga solo al revertir descuentos
+    const hasDiscount = useOrderAbastecimientoStore((state) => state.items.some(item => item.descuento_aplicado));
 
     const handleChangeNumeroDocumento = (event: React.ChangeEvent<HTMLInputElement>) => {
         setFormValues({ ...formValues, numeroDocumento: event.target.value });
-        if (hasDiscount) setHasDiscount(false);
-    };    
+    };
     const handleKeyNumeroDocumento = async (event: { key: string; preventDefault: () => void; }) => {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -41,17 +41,19 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
                         setFormValues({ ...formValues, razonSocial: '', direccion: '', placa: '' });
                     } 
                 }
-                const { status } = await applyDiscountIfExists(formValues.numeroDocumento);
-                if(status){
-                    notify({message: "Descuento aplicado", type:'success'});
+                // El serafín (calibración) no jala descuentos ni bloquea el campo: se permite cambiar de cliente
+                const esSerafin = formValues.tipoComprobante === Constants.TIPO_COMPROBANTE.CALIBRACION;
+                if (!esSerafin) {
+                    const { status } = await applyDiscountIfExists(formValues.numeroDocumento);
+                    if(status){
+                        notify({message: "Descuento aplicado", type:'success'});
+                    }
+                    lockBilling();
                 }
-                setHasDiscount(status);
-                lockBilling();                
-                
+
             }else{
                 notify({message: "Número de documento no válido", type:'error'})
                 setFormValues({ ...formValues, razonSocial: '', direccion: '', placa: '' });
-                setHasDiscount(false);
             }
 
         }
@@ -64,13 +66,19 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
         const tipoComprobante = (esSeleccionManual || numeroDocumento.length === 0) ? tipoActual : (numeroDocumento.length === 11 ? Constants.TIPO_COMPROBANTE.FACTURA : (  (numeroDocumento.length === 8 || numeroDocumento === "0") ? Constants.TIPO_COMPROBANTE.BOLETA : ''));
         const tipoDocumento = numeroDocumento.length === 11 ? Constants.TIPO_DOCUMENTO.RUC : (  (numeroDocumento.length === 8 || numeroDocumento === "0") ? Constants.TIPO_DOCUMENTO.DNI : '');
         setFormValues({ ...formValues, tipoComprobante, tipoDocumento });
-        if (numeroDocumento.length === 0 && hasDiscount) setHasDiscount(false);
     }, [formValues.numeroDocumento])
     
+    const labelDocumento = formValues.tipoDocumento === Constants.TIPO_DOCUMENTO.RUC ? 'RUC' : formValues.tipoDocumento === Constants.TIPO_DOCUMENTO.DNI ? 'DNI' : 'Número documento';
+    // Aviso dentro del recuadro (placeholder) según el tipo de comprobante elegido
+    const hintDocumento = (formValues.tipoComprobante === Constants.TIPO_COMPROBANTE.BOLETA || formValues.tipoComprobante === Constants.TIPO_COMPROBANTE.CALIBRACION)
+        ? 'Ingrese 8 dígitos'
+        : (formValues.tipoComprobante === Constants.TIPO_COMPROBANTE.FACTURA || formValues.tipoComprobante === Constants.TIPO_COMPROBANTE.NOTA_DESPACHO)
+            ? 'Ingrese 11 dígitos'
+            : '';
+
     return (
         <div className='col-span-1'>
-            <label htmlFor="numeroDocumento">{`${formValues.tipoDocumento === Constants.TIPO_DOCUMENTO.RUC ? 'RUC' : formValues.tipoDocumento === Constants.TIPO_DOCUMENTO.DNI ? 'DNI' : 'Número documento'}`}
-            </label>
+            <label htmlFor="numeroDocumento">{labelDocumento}</label>
             <input
                 className={`px-5 py-2 border rounded w-full transition-all outline-none ${
                     hasDiscount 
@@ -78,8 +86,9 @@ export const NumeroDocumento = ({ formValues, setFormValues }: Props) => {
                     : 'border-gray-300 bg-gray-200 focus:bg-white'
                 }`}
                 type="text"
-                name="numeroDocumento" 
+                name="numeroDocumento"
                 maxLength={ 11 }
+                placeholder={ hintDocumento }
                 value={ formValues.numeroDocumento }
                 onChange={ handleChangeNumeroDocumento }
                 onKeyDown={ handleKeyNumeroDocumento }
