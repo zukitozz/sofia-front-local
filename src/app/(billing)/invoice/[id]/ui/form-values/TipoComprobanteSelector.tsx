@@ -19,14 +19,16 @@ const opciones = [
 export const TipoComprobanteSelector = ({ formValues, setFormValues, disabled = false }: Props) => {
     const removeDiscounts = useOrderAbastecimientoStore((state) => state.removeDiscounts);
     const unlockBilling = useOrderAbastecimientoStore((state) => state.unlockBilling);
+    const unlockPlaca = useOrderAbastecimientoStore((state) => state.unlockPlaca);
 
     const handlerSelect = (tipo: string) => {
         if (tipo === formValues.tipoComprobante) return;
 
         // Cambiar de tipo de comprobante reinicia el cliente: se borra el documento,
-        // se revierten los descuentos aplicados y se desbloquea el campo para el nuevo cliente
+        // se revierten los descuentos aplicados y se desbloquean los campos para el nuevo cliente
         removeDiscounts();
         unlockBilling();
+        unlockPlaca();
         setFormValues({
             ...formValues,
             tipoComprobante: tipo,
