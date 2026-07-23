@@ -19,7 +19,6 @@ const opciones = [
 export const TipoComprobanteSelector = ({ formValues, setFormValues, disabled = false }: Props) => {
     const removeDiscounts = useOrderAbastecimientoStore((state) => state.removeDiscounts);
     const unlockBilling = useOrderAbastecimientoStore((state) => state.unlockBilling);
-    const unlockPlaca = useOrderAbastecimientoStore((state) => state.unlockPlaca);
 
     const handlerSelect = (tipo: string) => {
         if (tipo === formValues.tipoComprobante) return;
@@ -28,7 +27,6 @@ export const TipoComprobanteSelector = ({ formValues, setFormValues, disabled = 
         // se revierten los descuentos aplicados y se desbloquean los campos para el nuevo cliente
         removeDiscounts();
         unlockBilling();
-        unlockPlaca();
         setFormValues({
             ...formValues,
             tipoComprobante: tipo,
