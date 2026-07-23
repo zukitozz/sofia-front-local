@@ -1,11 +1,12 @@
 import { IBillingForm } from '@/interfaces';
 import React from 'react'
+import { useOrderAbastecimientoStore } from '@/store';
 interface Props {
     formValues: IBillingForm;
     setFormValues: (values: IBillingForm) => void;
-    isDisabled?: boolean;
 }
-export const Direccion = ({ formValues, setFormValues, isDisabled }: Props) => {
+export const Direccion = ({ formValues, setFormValues }: Props) => {
+    const isBillingBlocked = useOrderAbastecimientoStore((state) => state.isBillingBlocked);
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setFormValues({ ...formValues, direccion: event.target.value });
     };    
@@ -24,7 +25,7 @@ export const Direccion = ({ formValues, setFormValues, isDisabled }: Props) => {
                 value={ formValues.direccion }
                 onChange={ handleChange }
                 onKeyDown={ handleKeyDown }
-                disabled={isDisabled}
+                disabled={isBillingBlocked}
             />
         </div>
     )

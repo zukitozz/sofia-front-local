@@ -10,6 +10,9 @@ interface State {
     isBillingBlocked: boolean;
     lockBilling: () => void;
     unlockBilling: () => void;
+    isPlacaBlocked: boolean;
+    lockPlaca: () => void;
+    unlockPlaca: () => void;
     getTotalItems: () => number;
     addAbastecimientoToOrder: (item: IAbastecimiento ) => void;
     updateProductQuantity: (product: IOrderItem, quantity: number) => void;
@@ -31,6 +34,9 @@ export const useOrderAbastecimientoStore = create<State>()(
             isBillingBlocked: false,
             lockBilling: () => set({ isBillingBlocked: true }),
             unlockBilling: () => set({ isBillingBlocked: false }),
+            isPlacaBlocked: false,
+            lockPlaca: () => set({ isPlacaBlocked: true }),
+            unlockPlaca: () => set({ isPlacaBlocked: false }),
             getTotalItems: () => {
                 const { items } = get();
                 let new_cantidad = 0;

@@ -15,11 +15,10 @@ export const Placa = ({ formValues, setFormValues }: Props) => {
 
     const applyDiscountIfExists = useOrderAbastecimientoStore((state) => state.applyDiscountIfExists);
     const lockBilling = useOrderAbastecimientoStore((state) => state.lockBilling);
+    const lockPlaca = useOrderAbastecimientoStore((state) => state.lockPlaca);
     const isBillingBlocked = useOrderAbastecimientoStore((state) => state.isBillingBlocked);
+    const isPlacaBlocked = useOrderAbastecimientoStore((state) => state.isPlacaBlocked);
     const [suggestions, setSuggestions] = useState<IReceptorPlaca[]>([]);
-
-    // Bloqueo derivado del store: se libera solo al revertir descuentos (el badge visual vive en NumeroDocumento)
-    const hasDiscount = useOrderAbastecimientoStore((state) => state.items.some(item => item.descuento_aplicado));
 
     const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
@@ -49,6 +48,8 @@ export const Placa = ({ formValues, setFormValues }: Props) => {
                 notify({message: "Descuento aplicado", type:'success'});
             }
             lockBilling();
+            // Buscar por placa sí bloquea el propio campo (a diferencia de buscar por documento/razón social)
+            lockPlaca();
         }
     };
 
@@ -71,7 +72,7 @@ export const Placa = ({ formValues, setFormValues }: Props) => {
                 value={ formValues.placa }
                 onChange={ handleChange }
                 onKeyDown={ handleKeyDown }
-                disabled={hasDiscount}
+                disabled={isPlacaBlocked}
             />
             <SuggestionPlacaInput suggestions={suggestions} onSelect={handleSelectSuggestion}/>
         </div>
